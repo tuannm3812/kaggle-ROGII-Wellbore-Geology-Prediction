@@ -1,7 +1,7 @@
 {
   "id": "YOUR_KAGGLE_USERNAME/rogii-baseline-models",
   "title": "ROGII Baseline Models",
-  "code_file": "rogii_baseline_models.ipynb",
+  "code_file": "notebook.ipynb",
   "language": "python",
   "kernel_type": "notebook",
   "is_private": true,

@@ -1,7 +1,7 @@
 {
   "id": "YOUR_KAGGLE_USERNAME/rogii-wellbore-geology-prediction-baseline",
   "title": "ROGII Wellbore Geology Prediction Baseline",
-  "code_file": "rogii_wellbore_geology_prediction.ipynb",
+  "code_file": "notebook.ipynb",
   "language": "python",
   "kernel_type": "notebook",
   "is_private": true,

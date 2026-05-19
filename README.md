@@ -19,10 +19,10 @@ Current focus:
 
 | Path | Purpose |
 |---|---|
-| `rogii_wellbore_geology_prediction.ipynb` | EDA-first Kaggle notebook with dynamic insight callouts, viridis-styled plots, validation checks, and a simple submission baseline. |
-| `rogii_baseline_models.ipynb` | Baseline modeling notebook with masked-tail validation and several lightweight per-well prediction strategies. |
-| `kernel-metadata.json` | Kaggle kernel metadata for the EDA notebook. |
-| `kernel-metadata-baseline.json` | Kaggle kernel metadata for the baseline models notebook. |
+| `notebooks/eda/notebook.ipynb` | EDA-first Kaggle notebook with dynamic insight callouts, viridis-styled plots, validation checks, and a simple submission baseline. |
+| `notebooks/eda/kernel-metadata.json` | Kaggle kernel metadata for the EDA notebook. |
+| `notebooks/baseline-models/notebook.ipynb` | Baseline modeling notebook with masked-tail validation and several lightweight per-well prediction strategies. |
+| `notebooks/baseline-models/kernel-metadata.json` | Kaggle kernel metadata for the baseline models notebook. |
 | `.gitignore` | Ignore rules for local artifacts, notebook checkpoints, and generated submissions. |
 
 ## 03 - Kaggle Runtime Setup
@@ -52,7 +52,7 @@ Final competition submissions should run with internet disabled. The notebooks u
 
 ### 04.1 - EDA Notebook
 
-`rogii_wellbore_geology_prediction.ipynb` is organized as a report-style workflow:
+`notebooks/eda/notebook.ipynb` is organized as a report-style workflow:
 
 1. Resolve data paths, discover files, and parse the submission index.
 2. Build lightweight horizontal-well and typewell metadata.
@@ -64,7 +64,7 @@ Final competition submissions should run with internet disabled. The notebooks u
 
 ### 04.2 - Baseline Models Notebook
 
-`rogii_baseline_models.ipynb` compares deterministic, inference-safe baselines under masked-tail validation:
+`notebooks/baseline-models/notebook.ipynb` compares deterministic, inference-safe baselines under masked-tail validation:
 
 - carry-forward `TVT_input`;
 - per-well linear trend extrapolation;
@@ -133,10 +133,19 @@ Promising model directions:
 
 ## 08 - Kaggle CLI Note
 
-Before using the Kaggle CLI with either metadata file, replace:
+The JSON files are Kaggle kernel metadata files. They are not model inputs; they tell the Kaggle CLI which notebook to upload, which competition dataset to attach, and whether internet/GPU/TPU are enabled.
+
+Before using the Kaggle CLI, replace:
 
 ```text
 YOUR_KAGGLE_USERNAME
 ```
 
 with your Kaggle username.
+
+Then push a notebook folder:
+
+```bash
+kaggle kernels push -p notebooks/eda
+kaggle kernels push -p notebooks/baseline-models
+```
