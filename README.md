@@ -1,104 +1,19 @@
 # ROGII - Wellbore Geology Prediction
 
-## 1. Project Overview
+Kaggle notebooks for the [ROGII - Wellbore Geology Prediction](https://www.kaggle.com/competitions/rogii-wellbore-geology-prediction/overview) competition.
 
-This repository contains Kaggle-ready notebooks for the [ROGII - Wellbore Geology Prediction](https://www.kaggle.com/competitions/rogii-wellbore-geology-prediction/overview) competition.
+The goal is to predict `TVT` (True Vertical Thickness) across the hidden interval of each horizontal wellbore. The notebooks are intended to run directly in Kaggle with the competition dataset attached; no local dependency setup is required.
 
-The objective is to predict `TVT` (True Vertical Thickness) across the hidden interval of horizontal wellbores. The work is intentionally notebook-first and Kaggle-first: the notebooks are designed to run in the Kaggle competition environment with no local dependency setup.
+## 1. Notebooks
 
-Current workstream:
-
-- inspect the file-per-well data structure;
-- validate `sample_submission.csv` row indexing;
-- understand `TVT_input` missingness and hidden evaluation windows;
-- compare horizontal `GR` traces with typewell reference logs;
-- build reliable inference-safe baselines;
-- generate valid Kaggle `submission.csv` files.
-
-## 2. Repository Contents
-
-| Path | Purpose |
+| Notebook | Purpose |
 |---|---|
-| `notebooks/kaggle-rogii-wellbore-geology-prediction-eda.ipynb` | EDA notebook with file discovery, schema checks, missingness summaries, well-level plots, dynamic insight callouts, and a simple carry-forward submission. |
-| `notebooks/kaggle-rogii-wellbore-geology-prediction-eda-metadata.json` | Kaggle metadata for the EDA notebook. |
-| `notebooks/kaggle-rogii-wellbore-geology-prediction-baseline-models.ipynb` | Baseline modeling notebook with masked-tail validation and deterministic per-well prediction strategies. |
-| `notebooks/kaggle-rogii-wellbore-geology-prediction-baseline-models-metadata.json` | Kaggle metadata for the baseline modeling notebook. |
-| `notebooks/kaggle-rogii-wellbore-geology-prediction-feature-baseline.ipynb` | Feature-baseline notebook with rolling `GR`/`TVT_input` features, held-out-well masked-tail validation, and a residual tree model. |
-| `notebooks/kaggle-rogii-wellbore-geology-prediction-feature-baseline-metadata.json` | Kaggle metadata for the feature-baseline notebook. |
-| `.gitignore` | Ignore rules for local artifacts, notebook checkpoints, generated submissions, and local data. |
+| `notebooks/eda.ipynb` | Explore file layout, schema, missingness, well-level distributions, `GR`/`TVT` behavior, and submission format. |
+| `notebooks/modeling.ipynb` | Compare deterministic baselines and a feature-tree residual model under masked-tail validation, then write `submission.csv`. |
 
-## 3. Kaggle Runtime
+## 2. Data Layout
 
-Attach the competition data source in Kaggle. The notebooks first look for:
-
-```text
-/kaggle/input/competitions/rogii-wellbore-geology-prediction
-```
-
-They also fall back to:
-
-```text
-/kaggle/input/rogii-wellbore-geology-prediction
-```
-
-If Kaggle changes the mount layout, the notebooks recursively search `/kaggle/input` for `sample_submission.csv`.
-
-Final submissions should run with internet disabled. The notebooks use standard Kaggle packages only:
-
-- `numpy`
-- `pandas`
-- `matplotlib`
-- `seaborn`
-
-## 4. Notebook Workflow
-
-### 4.1 EDA Notebook
-
-`notebooks/kaggle-rogii-wellbore-geology-prediction-eda.ipynb` is a report-style exploration:
-
-1. Resolve data paths, discover files, and parse the submission index.
-2. Build lightweight horizontal-well and typewell metadata.
-3. Review schema differences, missingness, and evaluation windows.
-4. Plot representative wells with a consistent viridis palette.
-5. Sample training rows for target and feature relationships.
-6. Summarize EDA insights and modeling hypotheses.
-7. Write a simple carry-forward baseline submission.
-
-### 4.2 Baseline Models Notebook
-
-`notebooks/kaggle-rogii-wellbore-geology-prediction-baseline-models.ipynb` compares deterministic, inference-safe baselines:
-
-- carry-forward `TVT_input`;
-- per-well linear trend extrapolation;
-- damped trend extrapolation;
-- validation-selected blends of carry-forward and trend.
-
-The notebook writes:
-
-```text
-/kaggle/working/submission.csv
-```
-
-### 4.3 Feature Baseline Notebook
-
-`notebooks/kaggle-rogii-wellbore-geology-prediction-feature-baseline.ipynb` is the next modeling step. It adds inference-safe rolling features and trains a tree model on residuals over carry-forward.
-
-Feature families:
-
-- relative row and measured-depth position;
-- per-well centered coordinates;
-- `GR` missingness, interpolation, and rolling statistics;
-- carry-forward `TVT_input` rolling statistics;
-- distance from the last known `TVT_input` point;
-- recent `TVT_input` slope and volatility.
-
-The notebook validates by held-out wells and falls back to carry-forward if the tree model does not beat the baseline.
-
-## 5. Competition Data Shape
-
-The competition uses a file-per-well layout rather than a single `train.csv` / `test.csv` pair.
-
-Per-well files:
+The competition uses one pair of CSV files per well:
 
 ```text
 train/{WELLNAME}__horizontal_well.csv
@@ -115,88 +30,53 @@ id,tvt
 {WELLNAME}_{row_index},<predicted_tvt>
 ```
 
-The notebooks map each requested `row_index` back to the corresponding test horizontal-well CSV.
+The notebooks resolve both common Kaggle mount paths:
 
-## 6. Current EDA Findings
+```text
+/kaggle/input/competitions/rogii-wellbore-geology-prediction
+/kaggle/input/rogii-wellbore-geology-prediction
+```
 
-From the saved public-sample run:
+## 3. Current Findings
 
-- train inventory: `773` horizontal wells and `773` typewells;
-- public test inventory: `3` horizontal wells and `3` typewells;
-- submission rows: `14,151` predictions across `3` public-sample wells;
-- median hidden `TVT_input` interval: roughly `73-74%` of each well;
-- train-only geology-top columns exist (`ANCC`, `ASTNU`, `ASTNL`, `EGFDU`, `EGFDL`, `BUDA`) and should be treated as leakage-risk direct features;
-- sampled train `GR` missingness is about `32%`;
-- global `GR` to `TVT` correlation is weak, so useful signal is likely local log-shape alignment rather than simple row-wise regression.
+- Train set: `773` horizontal wells and `773` typewells.
+- Public test sample: `3` wells and `14,151` requested predictions.
+- Hidden `TVT_input` interval is long: roughly `73-74%` of each public-sample well.
+- Test does not include train-only geology-top columns such as `ANCC`, `ASTNU`, `ASTNL`, `EGFDU`, `EGFDL`, and `BUDA`; using them directly would leak.
+- Sampled train `GR` missingness is about `32%`.
+- Global `GR` to `TVT` correlation is weak, so useful signal is more likely local log-shape alignment than simple row-wise regression.
 
-The public test sample is intentionally small and train-like. Treat public-sample behavior as a smoke test, not as a final estimate of hidden leaderboard performance.
+## 4. Current Baseline
 
-## 7. Baseline Results
+Masked-tail validation currently favors carry-forward:
 
-Masked-tail validation currently favors the simplest baseline:
+| Model | Mean RMSE | Median RMSE |
+|---|---:|---:|
+| `carry_forward` | 7.62 | 6.14 |
+| `blend_0.25` | 8.43 | 6.87 |
+| `damped_trend_035` | 8.99 | 7.26 |
+| `linear_trend` | 14.05 | 10.02 |
 
-| Model | Mean RMSE | Median RMSE | Readout |
-|---|---:|---:|---|
-| `carry_forward` | 7.62 | 6.14 | Best current simple baseline. |
-| `blend_0.25` | 8.43 | 6.87 | Small trend weight hurts on average. |
-| `damped_trend_035` | 8.99 | 7.26 | Damping helps, but not enough. |
-| `blend_0.50` | 9.96 | 7.60 | Trend contribution is too large. |
-| `blend_0.75` | 11.87 | 8.86 | Clear over-extrapolation. |
-| `linear_trend` | 14.05 | 10.02 | Recent slope often does not persist. |
-
-Latest Kaggle submission:
+Latest Kaggle public score:
 
 | Metric | Value |
 |---|---:|
-| Latest public score | `15.883` |
-| Best public score | `15.883` |
-| Submission version | `V3` |
-| Daily submissions used | `2 / 5` |
+| Latest score | `15.883` |
+| Best score | `15.883` |
+| Version | `V3` |
 
-Interpretation: the carry-forward baseline is valid and stable, but the public score is materially worse than masked-tail validation. That gap suggests our validation is still too easy or not representative enough. The next improvement should focus on validation design and inference-safe features before moving to complex models.
+The gap between local validation and public score suggests validation is still too optimistic. The modeling notebook therefore uses held-out wells and multiple hidden-tail fractions before deciding whether the feature-tree model is safe to submit.
 
-## 8. Recommended Next Steps
+## 5. Next Step
 
-Priority order:
-
-1. Strengthen validation.
-   - evaluate more tail fractions;
-   - group results by well type, hidden-window length, and `GR` missingness;
-   - keep public-test wells out of modeling decisions except for smoke testing.
-2. Improve inference-safe features.
-   - add `TVT_input` slope, curvature, and local stability features;
-   - add `GR` missingness flags and interpolation variants;
-   - add rolling `GR` statistics;
-   - normalize `GR`, `MD`, `X`, `Y`, and `Z` per well.
-3. Add typewell alignment features.
-   - compare horizontal `GR` windows with typewell `GR` windows indexed by candidate `TVT`;
-   - create local correlation or distance features;
-   - use typewell geology labels only as reference context, not leaked targets.
-4. Train classical baselines.
-   - start with tree models on masked-tail rows;
-   - compare against carry-forward under the same validation protocol;
-   - submit only when validation improves consistently across wells.
-5. Add typewell-aware features if the feature baseline does not improve.
-   - typewell alignment is the most likely next source of signal;
-   - rolling features alone may not capture stratigraphic shifts or faults.
-
-Decision rule: move to advanced sequence models or fine-tuned models only after an inference-safe classical baseline beats carry-forward consistently across multiple masked-tail validation settings.
-
-## 9. Kaggle CLI Notes
-
-The JSON files are Kaggle kernel metadata files. They are not model inputs; they tell the Kaggle CLI which notebook to upload, which competition dataset to attach, and whether internet, GPU, or TPU are enabled.
-
-Before using the Kaggle CLI, replace:
+Run `notebooks/modeling.ipynb` on Kaggle and check:
 
 ```text
-YOUR_KAGGLE_USERNAME
+feature_tree validation RMSE < carry_forward validation RMSE
 ```
 
-with your Kaggle username.
+If true, submit the feature-tree output. If false, keep carry-forward and move next to typewell-alignment features:
 
-To use the Kaggle CLI from the flat `notebooks/` folder, copy the relevant metadata file to `kernel-metadata.json` before pushing:
-
-```bash
-cp notebooks/kaggle-rogii-wellbore-geology-prediction-feature-baseline-metadata.json notebooks/kernel-metadata.json
-kaggle kernels push -p notebooks
-```
+- local correlation between horizontal `GR` windows and typewell `GR` windows;
+- candidate-TVT search around the carry-forward estimate;
+- per-well normalized `GR`, `MD`, `X`, `Y`, and `Z` features.
