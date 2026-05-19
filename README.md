@@ -14,7 +14,7 @@ The competition is a code/notebook competition. You do not need to set up local 
 
 1. Open the notebook on Kaggle.
 2. Attach the competition data source. Kaggle should mount it at:
-   `/kaggle/input/rogii-wellbore-geology-prediction`
+   `/kaggle/input/competitions/rogii-wellbore-geology-prediction`
 3. Run the EDA sections first to inspect the data, then run the baseline section when you want a starter submission.
 4. Submit the generated file:
    `/kaggle/working/submission.csv`
@@ -35,4 +35,5 @@ Submission rows use `id,tvt`, where `id = {WELLNAME}_{row_index}`. The notebook 
 
 - This repo intentionally does not include dependency setup because Kaggle provides the runtime.
 - The notebook uses standard Kaggle packages: `pandas` and `numpy`.
+- The notebook also falls back to `/kaggle/input/rogii-wellbore-geology-prediction` or a recursive Kaggle input search if Kaggle changes the mount layout.
 - Internet must be disabled for final Kaggle submissions.
