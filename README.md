@@ -23,6 +23,8 @@ Current workstream:
 | `notebooks/kaggle-rogii-wellbore-geology-prediction-eda-metadata.json` | Kaggle metadata for the EDA notebook. |
 | `notebooks/kaggle-rogii-wellbore-geology-prediction-baseline-models.ipynb` | Baseline modeling notebook with masked-tail validation and deterministic per-well prediction strategies. |
 | `notebooks/kaggle-rogii-wellbore-geology-prediction-baseline-models-metadata.json` | Kaggle metadata for the baseline modeling notebook. |
+| `notebooks/kaggle-rogii-wellbore-geology-prediction-feature-baseline.ipynb` | Feature-baseline notebook with rolling `GR`/`TVT_input` features, held-out-well masked-tail validation, and a residual tree model. |
+| `notebooks/kaggle-rogii-wellbore-geology-prediction-feature-baseline-metadata.json` | Kaggle metadata for the feature-baseline notebook. |
 | `.gitignore` | Ignore rules for local artifacts, notebook checkpoints, generated submissions, and local data. |
 
 ## 3. Kaggle Runtime
@@ -76,6 +78,21 @@ The notebook writes:
 ```text
 /kaggle/working/submission.csv
 ```
+
+### 4.3 Feature Baseline Notebook
+
+`notebooks/kaggle-rogii-wellbore-geology-prediction-feature-baseline.ipynb` is the next modeling step. It adds inference-safe rolling features and trains a tree model on residuals over carry-forward.
+
+Feature families:
+
+- relative row and measured-depth position;
+- per-well centered coordinates;
+- `GR` missingness, interpolation, and rolling statistics;
+- carry-forward `TVT_input` rolling statistics;
+- distance from the last known `TVT_input` point;
+- recent `TVT_input` slope and volatility.
+
+The notebook validates by held-out wells and falls back to carry-forward if the tree model does not beat the baseline.
 
 ## 5. Competition Data Shape
 
@@ -159,6 +176,9 @@ Priority order:
    - start with tree models on masked-tail rows;
    - compare against carry-forward under the same validation protocol;
    - submit only when validation improves consistently across wells.
+5. Add typewell-aware features if the feature baseline does not improve.
+   - typewell alignment is the most likely next source of signal;
+   - rolling features alone may not capture stratigraphic shifts or faults.
 
 Decision rule: move to advanced sequence models or fine-tuned models only after an inference-safe classical baseline beats carry-forward consistently across multiple masked-tail validation settings.
 
@@ -177,6 +197,6 @@ with your Kaggle username.
 To use the Kaggle CLI from the flat `notebooks/` folder, copy the relevant metadata file to `kernel-metadata.json` before pushing:
 
 ```bash
-cp notebooks/kaggle-rogii-wellbore-geology-prediction-baseline-models-metadata.json notebooks/kernel-metadata.json
+cp notebooks/kaggle-rogii-wellbore-geology-prediction-feature-baseline-metadata.json notebooks/kernel-metadata.json
 kaggle kernels push -p notebooks
 ```

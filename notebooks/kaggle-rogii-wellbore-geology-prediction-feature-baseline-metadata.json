@@ -1,0 +1,16 @@
+{
+  "id": "YOUR_KAGGLE_USERNAME/rogii-feature-baseline",
+  "title": "ROGII Feature Baseline",
+  "code_file": "kaggle-rogii-wellbore-geology-prediction-feature-baseline.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": false,
+  "enable_tpu": false,
+  "enable_internet": false,
+  "dataset_sources": [],
+  "competition_sources": [
+    "rogii-wellbore-geology-prediction"
+  ],
+  "kernel_sources": []
+}
