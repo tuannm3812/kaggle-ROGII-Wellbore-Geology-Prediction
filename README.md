@@ -116,7 +116,20 @@ The saved public-sample run showed 773 training wells, 3 public test wells, 14,1
 
 ## 07 - Recommended Next Steps
 
-Use masked-tail validation on training wells to mimic the competition setup. Compare every model against the carry-forward baseline under the same validation protocol.
+The current baseline-models run shows that `carry_forward` is still the strongest simple baseline:
+
+| Model | Mean RMSE | Median RMSE |
+|---|---:|---:|
+| `carry_forward` | 7.62 | 6.14 |
+| `blend_0.25` | 8.43 | 6.87 |
+| `damped_trend_035` | 8.99 | 7.26 |
+| `blend_0.50` | 9.96 | 7.60 |
+| `blend_0.75` | 11.87 | 8.86 |
+| `linear_trend` | 14.05 | 10.02 |
+
+This means naive trend extrapolation is not reliable enough yet. The next step should be a stronger validation and feature-engineering baseline, not advanced/fine-tuned models.
+
+Use masked-tail validation on training wells to mimic the competition setup. Compare every model against carry-forward under the same validation protocol.
 
 Promising feature directions:
 
@@ -130,6 +143,8 @@ Promising model directions:
 - per-well linear or spline extrapolation;
 - tree models trained on tail-masked rows;
 - sequence models or alignment-based models once validation is stable.
+
+Decision rule: move to advanced or fine-tuned models only after an inference-safe classical baseline beats carry-forward consistently across multiple masked-tail validation settings.
 
 ## 08 - Kaggle CLI Note
 
