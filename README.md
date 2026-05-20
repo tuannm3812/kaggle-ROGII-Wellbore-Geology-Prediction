@@ -13,7 +13,8 @@ The goal is to predict `TVT` (True Vertical Thickness) across the hidden interva
 | 1 | `notebooks/eda.ipynb` | Reference | Explore file layout, schema, missingness, well-level distributions, `GR`/`TVT` behavior, and submission format. |
 | 2 | `notebooks/modeling.ipynb` | Stable baseline | Compare deterministic baselines and a feature-tree residual model under masked-tail validation. |
 | 3 | `notebooks/advanced-modeling.ipynb` | Current best | Reproduce the typewell-alignment approach that reached public score `15.049`. |
-| 4 | `notebooks/dwt-modeling.ipynb` | Candidate | Test DWT-inspired multi-scale `GR` log-shape matching against typewell offsets. |
+| 4 | `notebooks/beam-pf-modeling.ipynb` | Main candidate | Test Beam/PF trajectory reconstruction and ensemble blending. |
+| 5 | `notebooks/dwt-modeling.ipynb` | Side candidate | Test DWT-inspired multi-scale `GR` log-shape matching against typewell offsets. |
 
 See `notebooks/README.md` for the short run guide.
 
@@ -84,11 +85,13 @@ The feature baseline moved the public score from `15.883` to `15.491`, then type
 
 ## 5. Current Direction
 
-The typewell-alignment experiment is now the current best path:
+The typewell-alignment experiment is the current best submitted path:
 
 - candidate-`TVT` search around the carry-forward estimate;
 - typewell `GR` interpolation at nearby `TVT` offsets;
 - best local `GR` match, offset, difference, slope, and context-spread features;
 - per-well normalized `GR`, `MD`, `X`, `Y`, and `Z` features.
 
-The advanced notebook still keeps carry-forward as a fallback. Since Advanced Modeling `V3` dropped to `15.306`, the next candidate is `notebooks/dwt-modeling.ipynb`, which tests multi-scale Haar/DWT-style `GR` detail matching instead of only raw `GR` value matching.
+The next main candidate is `notebooks/beam-pf-modeling.ipynb`. It moves beyond residual features by building full `TVT` trajectory candidates with beam search, particle filters, multi-scale normalized cross-correlation, spatial formation imputation, model ensembling, and post-processing.
+
+`notebooks/dwt-modeling.ipynb` remains a lighter side candidate for multi-scale `GR` shape features, but Beam/PF is the better path for a large leaderboard jump.
