@@ -74,16 +74,17 @@ Latest Kaggle public scores:
 | `V3` | `15.883` | Previous carry-forward/simple baseline level. |
 | `V6` | `15.491` | Feature-tree submission improved the score by `0.392`. |
 | `V7` | `15.491` | Latest rerun matched the current best; no additional gain. |
+| Advanced Modeling `V2` | `15.049` | Typewell-alignment features improved the best score by another `0.442`. |
 
-The feature baseline moved the public score from `15.883` to `15.491`, but the latest run plateaued at the same score. The validation gain is useful enough to keep the feature notebook, but the current rolling-feature tree is likely saturated. The next improvement needs new geological signal, not just more tuning of the same feature set.
+The feature baseline moved the public score from `15.883` to `15.491`, then typewell-alignment features improved it further to `15.049`. This confirms the main EDA hypothesis: useful signal is more likely in local `GR` log-shape alignment than in simple row-wise regression or additional tuning of the same rolling-feature baseline.
 
 ## 5. Advanced Experiment
 
-The feature tree has matched the current best score, so the next experiment moves beyond baseline tuning into typewell alignment:
+The typewell-alignment experiment is now the current best path:
 
 - candidate-`TVT` search around the carry-forward estimate;
 - typewell `GR` interpolation at nearby `TVT` offsets;
 - best local `GR` match, offset, difference, slope, and context-spread features;
 - per-well normalized `GR`, `MD`, `X`, `Y`, and `Z` features.
 
-The advanced notebook still keeps carry-forward as a fallback. Submit the typewell-alignment model only if masked-tail validation beats carry-forward.
+The advanced notebook still keeps carry-forward as a fallback. The next refinement should improve the alignment search itself, because this is the first feature family that moved the public score beyond the baseline plateau.
