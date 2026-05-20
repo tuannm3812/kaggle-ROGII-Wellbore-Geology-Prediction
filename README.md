@@ -12,6 +12,7 @@ The goal is to predict `TVT` (True Vertical Thickness) across the hidden interva
 |---|---|
 | `notebooks/eda.ipynb` | Explore file layout, schema, missingness, well-level distributions, `GR`/`TVT` behavior, and submission format. |
 | `notebooks/modeling.ipynb` | Compare deterministic baselines and a feature-tree residual model under masked-tail validation, then write `submission.csv`. |
+| `notebooks/advanced-modeling.ipynb` | Test typewell-alignment features around carry-forward `TVT` estimates with a residual tree model. |
 
 ## 2. Data Layout
 
@@ -76,10 +77,13 @@ Latest Kaggle public scores:
 
 The feature baseline moved the public score from `15.883` to `15.491`, but the latest run plateaued at the same score. The validation gain is useful enough to keep the feature notebook, but the current rolling-feature tree is likely saturated. The next improvement needs new geological signal, not just more tuning of the same feature set.
 
-## 5. Next Experiment
+## 5. Advanced Experiment
 
-The feature tree has matched the current best score, so the next experiment should add typewell-alignment features rather than only tuning the same rolling-feature model:
+The feature tree has matched the current best score, so the next experiment moves beyond baseline tuning into typewell alignment:
 
-- local correlation between horizontal `GR` windows and typewell `GR` windows;
-- candidate-TVT search around the carry-forward estimate;
+- candidate-`TVT` search around the carry-forward estimate;
+- typewell `GR` interpolation at nearby `TVT` offsets;
+- best local `GR` match, offset, difference, slope, and context-spread features;
 - per-well normalized `GR`, `MD`, `X`, `Y`, and `Z` features.
+
+The advanced notebook still keeps carry-forward as a fallback. Submit the typewell-alignment model only if masked-tail validation beats carry-forward.
