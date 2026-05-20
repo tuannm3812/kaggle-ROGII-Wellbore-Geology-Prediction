@@ -57,25 +57,26 @@ Masked-tail validation currently favors carry-forward:
 | `damped_trend_035` | 8.99 | 7.26 |
 | `linear_trend` | 14.05 | 10.02 |
 
+The feature-tree residual model improved held-out-well validation slightly:
+
+| Model | Validation RMSE |
+|---|---:|
+| `carry_forward` | 10.281 |
+| `feature_tree` | 10.084 |
+
 Latest Kaggle public score:
 
 | Metric | Value |
 |---|---:|
-| Latest score | `15.883` |
-| Best score | `15.883` |
-| Version | `V3` |
+| Latest score | `15.491` |
+| Best score | `15.491` |
+| Version | `V6` |
 
-The gap between local validation and public score suggests validation is still too optimistic. The modeling notebook therefore uses held-out wells and multiple hidden-tail fractions before deciding whether the feature-tree model is safe to submit.
+The feature baseline improved the public score from `15.883` to `15.491`, a `0.392` RMSE gain. The gap between local validation and public score still suggests validation is optimistic, but the direction is now useful: inference-safe rolling features can add signal beyond carry-forward.
 
-## 5. Next Step
+## 5. Next Experiment
 
-Run `notebooks/modeling.ipynb` on Kaggle and check:
-
-```text
-feature_tree validation RMSE < carry_forward validation RMSE
-```
-
-If true, submit the feature-tree output. If false, keep carry-forward and move next to typewell-alignment features:
+The feature tree has beaten carry-forward once, so the next experiment should add typewell-alignment features rather than only tuning the same rolling-feature model:
 
 - local correlation between horizontal `GR` windows and typewell `GR` windows;
 - candidate-TVT search around the carry-forward estimate;
