@@ -13,6 +13,7 @@ The goal is to predict `TVT` (True Vertical Thickness) across the hidden interva
 | `notebooks/eda.ipynb` | Explore file layout, schema, missingness, well-level distributions, `GR`/`TVT` behavior, and submission format. |
 | `notebooks/modeling.ipynb` | Compare deterministic baselines and a feature-tree residual model under masked-tail validation, then write `submission.csv`. |
 | `notebooks/advanced-modeling.ipynb` | Test typewell-alignment features around carry-forward `TVT` estimates with a residual tree model. |
+| `notebooks/dwt-modeling.ipynb` | Test DWT-inspired multi-scale `GR` log-shape matching against typewell offsets. |
 
 ## 2. Data Layout
 
@@ -75,6 +76,7 @@ Latest Kaggle public scores:
 | `V6` | `15.491` | Feature-tree submission improved the score by `0.392`. |
 | `V7` | `15.491` | Latest rerun matched the current best; no additional gain. |
 | Advanced Modeling `V2` | `15.049` | Typewell-alignment features improved the best score by another `0.442`. |
+| Advanced Modeling `V3` | `15.306` | Denser offsets and residual shrinkage dropped versus V2; do not treat as best. |
 
 The feature baseline moved the public score from `15.883` to `15.491`, then typewell-alignment features improved it further to `15.049`. This confirms the main EDA hypothesis: useful signal is more likely in local `GR` log-shape alignment than in simple row-wise regression or additional tuning of the same rolling-feature baseline.
 
@@ -87,4 +89,4 @@ The typewell-alignment experiment is now the current best path:
 - best local `GR` match, offset, difference, slope, and context-spread features;
 - per-well normalized `GR`, `MD`, `X`, `Y`, and `Z` features.
 
-The advanced notebook still keeps carry-forward as a fallback. The current V3 candidate improves the alignment search with denser `TVT` offsets, rolling `GR` correlation features, and validation-selected residual shrinkage.
+The advanced notebook still keeps carry-forward as a fallback. Since Advanced Modeling `V3` dropped to `15.306`, the next candidate is `notebooks/dwt-modeling.ipynb`, which tests multi-scale Haar/DWT-style `GR` detail matching instead of only raw `GR` value matching.
