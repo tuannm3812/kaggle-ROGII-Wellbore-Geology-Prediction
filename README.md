@@ -64,19 +64,19 @@ The feature-tree residual model improved held-out-well validation slightly:
 | `carry_forward` | 10.281 |
 | `feature_tree` | 10.084 |
 
-Latest Kaggle public score:
+Latest Kaggle public scores:
 
-| Metric | Value |
-|---|---:|
-| Latest score | `15.491` |
-| Best score | `15.491` |
-| Version | `V6` |
+| Version | Public score | Readout |
+|---|---:|---|
+| `V3` | `15.883` | Previous carry-forward/simple baseline level. |
+| `V6` | `15.491` | Feature-tree submission improved the score by `0.392`. |
+| `V7` | `15.491` | Latest rerun matched the current best; no additional gain. |
 
-The feature baseline improved the public score from `15.883` to `15.491`, a `0.392` RMSE gain. The gap between local validation and public score still suggests validation is optimistic, but the direction is now useful: inference-safe rolling features can add signal beyond carry-forward.
+The feature baseline moved the public score from `15.883` to `15.491`, but the latest run plateaued at the same score. The validation gain is useful enough to keep the feature notebook, but the current rolling-feature tree is likely saturated. The next improvement needs new geological signal, not just more tuning of the same feature set.
 
 ## 5. Next Experiment
 
-The feature tree has beaten carry-forward once, so the next experiment should add typewell-alignment features rather than only tuning the same rolling-feature model:
+The feature tree has matched the current best score, so the next experiment should add typewell-alignment features rather than only tuning the same rolling-feature model:
 
 - local correlation between horizontal `GR` windows and typewell `GR` windows;
 - candidate-TVT search around the carry-forward estimate;
