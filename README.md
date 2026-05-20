@@ -87,4 +87,4 @@ The typewell-alignment experiment is now the current best path:
 - best local `GR` match, offset, difference, slope, and context-spread features;
 - per-well normalized `GR`, `MD`, `X`, `Y`, and `Z` features.
 
-The advanced notebook still keeps carry-forward as a fallback. The next refinement should improve the alignment search itself, because this is the first feature family that moved the public score beyond the baseline plateau.
+The advanced notebook still keeps carry-forward as a fallback. The current V3 candidate improves the alignment search with denser `TVT` offsets, rolling `GR` correlation features, and validation-selected residual shrinkage.
