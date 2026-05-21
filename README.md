@@ -10,11 +10,10 @@ The goal is to predict `TVT` (True Vertical Thickness) across the hidden interva
 
 | Order | Notebook | Status | Purpose |
 |---:|---|---|---|
-| 1 | `notebooks/eda.ipynb` | Reference | Explore file layout, schema, missingness, well-level distributions, `GR`/`TVT` behavior, and submission format. |
-| 2 | `notebooks/modeling.ipynb` | Stable baseline | Compare deterministic baselines and a feature-tree residual model under masked-tail validation. |
-| 3 | `notebooks/advanced-modeling.ipynb` | Current best | Reproduce the typewell-alignment approach that reached public score `15.049`. |
-| 4 | `notebooks/beam-pf-modeling.ipynb` | Main candidate | Test Beam/PF trajectory reconstruction and ensemble blending. |
-| 5 | `notebooks/dwt-modeling.ipynb` | Side candidate | Test DWT-inspired multi-scale `GR` log-shape matching against typewell offsets. |
+| 1 | `notebooks/01-eda.ipynb` | Reference | Explore file layout, schema, missingness, well-level distributions, `GR`/`TVT` behavior, and submission format. |
+| 2 | `notebooks/02-baseline-modeling.ipynb` | Stable baseline | Compare deterministic baselines and a feature-tree residual model under masked-tail validation. |
+| 3 | `notebooks/03-typewell-alignment-modeling.ipynb` | Previous best | Reproduce the typewell-alignment approach that reached public score `15.049`. |
+| 4 | `notebooks/04-beam-pf-modeling.ipynb` | Current best | Reproduce Beam/PF trajectory reconstruction and ensemble blending that reached public score `9.941`. |
 
 See `notebooks/README.md` for the short run guide.
 
@@ -80,18 +79,25 @@ Latest Kaggle public scores:
 | `V7` | `15.491` | Latest rerun matched the current best; no additional gain. |
 | Advanced Modeling `V2` | `15.049` | Typewell-alignment features improved the best score by another `0.442`. |
 | Advanced Modeling `V3` | `15.306` | Denser offsets and residual shrinkage dropped versus V2; do not treat as best. |
+| Beam + Particle Filter `V1` | `9.941` | Full trajectory candidates plus ensemble blending produced the largest gain. |
 
-The feature baseline moved the public score from `15.883` to `15.491`, then typewell-alignment features improved it further to `15.049`. This confirms the main EDA hypothesis: useful signal is more likely in local `GR` log-shape alignment than in simple row-wise regression or additional tuning of the same rolling-feature baseline.
+The feature baseline moved the public score from `15.883` to `15.491`, typewell-alignment features improved it to `15.049`, and Beam/PF reduced it further to `9.941`. The key lesson is that full `TVT` trajectory reconstruction is much stronger than row-wise residual modeling alone.
 
 ## 5. Current Direction
 
-The typewell-alignment experiment is the current best submitted path:
+Beam/PF is the current best submitted path. It moves beyond residual features by building full `TVT` trajectory candidates with:
 
-- candidate-`TVT` search around the carry-forward estimate;
-- typewell `GR` interpolation at nearby `TVT` offsets;
-- best local `GR` match, offset, difference, slope, and context-spread features;
-- per-well normalized `GR`, `MD`, `X`, `Y`, and `Z` features.
+- Numba beam search over typewell `GR` paths;
+- particle filters for hidden-interval trajectory reconstruction;
+- multi-scale normalized cross-correlation between horizontal and typewell `GR`;
+- spatial formation-plane and dense `ANCC` imputation;
+- LightGBM/CatBoost ensemble blending and smoothing.
 
-The next main candidate is `notebooks/beam-pf-modeling.ipynb`. It moves beyond residual features by building full `TVT` trajectory candidates with beam search, particle filters, multi-scale normalized cross-correlation, spatial formation imputation, model ensembling, and post-processing.
+DWT modeling is not kept as an active repo notebook. The Beam/PF result already captures the more important idea: compare and reconstruct log trajectories directly, then blend the best candidate signals.
 
-`notebooks/dwt-modeling.ipynb` remains a lighter side candidate for multi-scale `GR` shape features, but Beam/PF is the better path for a large leaderboard jump.
+Next improvements should be controlled Beam/PF ablations:
+
+- compare Beam/PF with and without spatial formation imputation;
+- tune the post-processing grid around `alpha`, `tau`, and particle-filter blend weight;
+- inspect per-public-well prediction curves for over-smoothing or trajectory jumps;
+- simplify the Beam/PF notebook once the strongest components are confirmed.
