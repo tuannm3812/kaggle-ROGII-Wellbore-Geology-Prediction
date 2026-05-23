@@ -10,12 +10,18 @@ The goal is to predict `TVT` (True Vertical Thickness) across the hidden interva
 
 | Order | Notebook | Status | Purpose |
 |---:|---|---|---|
-| 1 | `notebooks/01-eda.ipynb` | Reference | Explore file layout, schema, missingness, well-level distributions, `GR`/`TVT` behavior, and submission format. |
-| 2 | `notebooks/02-baseline-modeling.ipynb` | Stable baseline | Compare deterministic baselines and a feature-tree residual model under masked-tail validation. |
-| 3 | `notebooks/03-typewell-alignment-modeling.ipynb` | Previous best | Reproduce the typewell-alignment approach that reached public score `15.049`. |
-| 4 | `notebooks/04-beam-pf-modeling.ipynb` | Current best | Reproduce Beam/PF trajectory reconstruction and ensemble blending that reached public score `9.941`. |
+| 1 | `notebooks/1_rogii_eda.ipynb` | Reference | Explore file layout, schema, missingness, well-level distributions, `GR`/`TVT` behavior, and submission format. |
+| 2 | `notebooks/2_rogii_baseline.ipynb` | Stable baseline | Compare deterministic baselines and a feature-tree residual model under masked-tail validation. |
+| 3 | `notebooks/3_rogii_typewell_alignment.ipynb` | Previous best | Reproduce the typewell-alignment approach that reached public score `15.049`. |
+| 4 | `notebooks/4_rogii_beam_pf.ipynb` | Current best | Reproduce Beam/PF trajectory reconstruction and ensemble blending that reached public score `9.941`. |
 
-See `notebooks/README.md` for the short run guide.
+See `docs/1_instructions.md` for the run guide and modeling approach notes.
+
+Detailed project notes live in:
+
+- `docs/1_instructions.md` for workflow instructions and modeling approaches;
+- `docs/2_eda_insights.md` for detailed EDA findings and chart guidance;
+- `docs/3_baseline_models.md` for baseline approach details and results.
 
 ## 2. Data Layout
 
