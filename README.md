@@ -2,36 +2,35 @@
 
 ![ROGII - Wellbore Geology Prediction banner](https://www.googleapis.com/download/storage/v1/b/kaggle-forum-message-attachments/o/inbox%2F4080021%2F3f56527c733365a94d929bdc0600c7ef%2Fig_023b4ba06ac0441e0169fa9248ca54819aacb93888a02601a8.png?generation=1778029361497538&alt=media)
 
-Kaggle notebooks for the [ROGII - Wellbore Geology Prediction](https://www.kaggle.com/competitions/rogii-wellbore-geology-prediction/overview) competition.
+**Notebook-first solution work** for the [ROGII - Wellbore Geology Prediction](https://www.kaggle.com/competitions/rogii-wellbore-geology-prediction/overview) Kaggle competition.
 
-The goal is to predict `TVT` (True Vertical Thickness) across the hidden interval of each horizontal wellbore. The notebooks are intended to run directly in Kaggle with the competition dataset attached; no local dependency setup is required.
+The competition asks participants to predict **`TVT` (True Vertical Thickness)** across the hidden interval of each horizontal wellbore. The modeling challenge is not a simple row-wise regression problem: each well has a **long hidden suffix**, a visible **`TVT_input` prefix**, a horizontal **`GR` log**, spatial coordinates, and a paired **typewell reference**.
 
-Current selected submission: Beam + Particle Filter `V1`, public score `9.941`.
-Later artifact-workflow reruns are useful for reproducibility checks, but they have not beaten the selected public score.
+The strongest submitted approach in this repository is **Beam + Particle Filter V1**, with public RMSE `9.941`. Later artifact-workflow reruns improved reproducibility but scored lower on the public leaderboard, so V1 remains the selected submission.
 
-## 1. Project Snapshot
+## 1. Project Overview
 
-This repository presents a notebook-first geoscience modeling workflow:
+This project builds a sequence-reconstruction workflow for wellbore geology:
 
-- parse well-level horizontal and typewell logs;
-- study hidden `TVT_input` intervals and leakage boundaries;
-- build masked-tail validation that resembles competition inference;
-- compare carry-forward, feature-tree, typewell-alignment, and Beam/PF models;
-- package Beam/PF trained models as Kaggle artifacts for submission-mode replay.
+1. Explore well-level file structure, hidden interval length, missingness, and leakage boundaries.
+2. Establish carry-forward and feature-tree baselines under masked-tail validation.
+3. Add typewell-aware `GR` alignment features to improve long-tail inference.
+4. Build Beam/PF trajectory candidates and blend them with LightGBM/CatBoost models.
+5. Package trained Beam/PF artifacts for Kaggle submission-mode replay.
 
-The strongest public result remains Beam + Particle Filter `V1` with public RMSE `9.941`. Later reruns improved reproducibility but scored lower on the visible public set, so V1 remains the selected submission.
+The key modeling lesson is that full **`TVT` trajectory reconstruction** is much stronger than tuning row-wise residual features alone.
 
 ## 2. Technical Skills
 
 | Area | Evidence In This Project |
 |---|---|
-| Geoscience ML | `TVT` trajectory reconstruction from horizontal well logs, paired typewells, and gamma ray signals. |
-| Validation design | Held-out-well masked-tail validation to avoid row-level leakage. |
-| Feature engineering | Rolling `GR` features, `TVT_input` slopes, spatial coordinates, typewell alignment, formation-plane estimates, and trajectory candidates. |
-| Sequence reconstruction | Beam search and particle-filter style trajectory candidates for long hidden intervals. |
-| Modeling | `HistGradientBoostingRegressor`, LightGBM, CatBoost, ridge stacking, and post-processing. |
-| Kaggle operations | Notebook path discovery, offline-safe runs, `submission.csv` generation, and private model artifact replay. |
-| Documentation | Reviewer-facing result summaries, score interpretation, run instructions, and coding standards. |
+| Geoscience ML | `TVT` trajectory reconstruction from horizontal wells, typewells, gamma ray logs, and spatial coordinates. |
+| Validation design | Held-out-well masked-tail validation that mimics the hidden suffix in test wells. |
+| Feature engineering | Rolling `GR` features, `TVT_input` slopes, typewell offset search, formation-plane estimates, and trajectory candidate features. |
+| Sequence modeling | Beam-search and particle-filter style candidates for long hidden intervals. |
+| Model stacking | LightGBM, CatBoost, ridge blending, post-processing shrinkage, and smoothing. |
+| Kaggle workflow | Path auto-detection, offline-safe notebooks, `submission.csv` generation, and private artifact replay. |
+| Technical communication | Reviewer-facing EDA notes, baseline readouts, score interpretation, and coding standards. |
 
 ## 3. Repository Structure
 
@@ -50,37 +49,34 @@ The strongest public result remains Beam + Particle Filter `V1` with public RMSE
     └── 4_rogii_beam_pf.ipynb
 ```
 
-The repository intentionally does not store raw competition data, trained model zips, Kaggle working directories, or local checkpoints. Large reusable artifacts should stay on Kaggle as private model inputs.
+Detailed notes:
 
-## 4. Run Instructions
+- `docs/1_instructions.md`: competition framing, run order, approaches, and next analysis.
+- `docs/2_eda_insights.md`: EDA findings, sample charts, and deeper-analysis targets.
+- `docs/3_baseline_models.md`: baseline, typewell-alignment, and Beam/PF result readouts.
+- `docs/coding_standards.md`: notebook and documentation standards for this project.
 
-Run the notebooks on Kaggle in order:
+## 4. Notebook Flow
 
-| Order | Notebook | Status | Purpose |
+Run the notebooks on Kaggle in order.
+
+| Order | Notebook | Role | Main Output |
 |---:|---|---|---|
-| 1 | `notebooks/1_rogii_eda.ipynb` | Reference | Explore file layout, schema, missingness, well-level distributions, `GR`/`TVT` behavior, and submission format. |
-| 2 | `notebooks/2_rogii_baseline.ipynb` | Stable baseline | Compare deterministic baselines and a feature-tree residual model under masked-tail validation. |
-| 3 | `notebooks/3_rogii_typewell_alignment.ipynb` | Previous best | Reproduce the typewell-alignment approach that reached public score `15.049`. |
-| 4 | `notebooks/4_rogii_beam_pf.ipynb` | Selected best | Reproduce Beam/PF trajectory reconstruction and ensemble blending. V1 remains selected with public score `9.941`. |
+| 1 | `notebooks/1_rogii_eda.ipynb` | EDA | Data inventory, missingness, hidden suffix analysis, leakage checks. |
+| 2 | `notebooks/2_rogii_baseline.ipynb` | Baseline | Carry-forward, trend, blend, and feature-tree residual model. |
+| 3 | `notebooks/3_rogii_typewell_alignment.ipynb` | Alignment model | Typewell-aware `GR` alignment features and residual model. |
+| 4 | `notebooks/4_rogii_beam_pf.ipynb` | Selected modeling path | Beam/PF candidates, ensemble blending, `submission.csv`, artifact zip. |
 
-For Beam/PF:
+Beam/PF supports two runtime modes:
 
-1. Run with `CFG.MODE = "train"` to train models, write `submission.csv`, and create `rogii_beam_pf_artifacts.zip`.
-2. Upload the artifact zip as a private Kaggle model input.
-3. Run again with `CFG.MODE = "submission"` to load artifacts and write `submission.csv` without retraining.
-4. Compare train-mode and submission-mode predictions before treating the artifact as reusable.
+| Mode | Use Case | Output |
+|---|---|---|
+| `CFG.MODE = "train"` | Train models and produce artifacts. | `submission.csv` and `rogii_beam_pf_artifacts.zip`. |
+| `CFG.MODE = "submission"` | Load attached artifacts and submit without retraining. | `submission.csv`. |
 
-See `docs/1_instructions.md` for the detailed run guide and modeling approach notes.
+## 5. Data Shape
 
-Detailed project notes live in:
-
-- `docs/1_instructions.md` for workflow instructions and modeling approaches;
-- `docs/2_eda_insights.md` for detailed EDA findings and chart guidance;
-- `docs/3_baseline_models.md` for baseline and model result details.
-
-## 5. Data Layout
-
-The competition uses one pair of CSV files per well:
+The competition uses one horizontal-well CSV and one typewell CSV per well:
 
 ```text
 train/{WELLNAME}__horizontal_well.csv
@@ -97,80 +93,60 @@ id,tvt
 {WELLNAME}_{row_index},<predicted_tvt>
 ```
 
-The notebooks resolve both common Kaggle mount paths:
+Important EDA readouts:
 
-```text
-/kaggle/input/competitions/rogii-wellbore-geology-prediction
-/kaggle/input/rogii-wellbore-geology-prediction
-```
-
-## 6. Current Lessons
-
-- Train set: `773` horizontal wells and `773` typewells.
-- Public test sample: `3` wells and `14,151` requested predictions.
-- Hidden `TVT_input` interval is long: roughly `73-74%` of each public-sample well.
-- Test does not include train-only geology-top columns such as `ANCC`, `ASTNU`, `ASTNL`, `EGFDU`, `EGFDL`, and `BUDA`; using them directly would leak.
-- Sampled train `GR` missingness is about `32%`.
-- Global `GR` to `TVT` correlation is weak, so useful signal is more likely local log-shape alignment than simple row-wise regression.
-- Public score is volatile because the visible public sample has only `3` wells.
-- Local masked-tail validation is useful for direction, but it has not ranked Beam/PF reruns exactly the same way as the public leaderboard.
-- Beam/PF is the strongest modeling family, but newer reruns can still underperform the selected V1 public score.
-
-## 7. Notebook Output Insights
-
-| Notebook | Latest Output | Insight |
+| Finding | Value | Implication |
 |---|---:|---|
-| EDA | `773` train wells, `3` public test wells, `14,151` submission rows | Treat the public leaderboard as a small-sample smoke test, not a stable model ranking. |
-| EDA | Median hidden suffix: train `74.0%`, public test `72.7%` | The task is long-range trajectory continuation, not short interpolation. |
-| EDA | Sampled `GR` missingness `32.0%`; sampled `GR`/`TVT` correlation `-0.052` | Missingness handling and local log matching matter more than global correlation. |
-| Baseline | `10.281 -> 10.084` validation RMSE | Row-wise residual features help, but only modestly. |
-| Typewell alignment | `10.281 -> 9.799` validation RMSE | Typewell-aware `GR` alignment adds a real new signal family. |
-| Beam/PF latest train run | Stack `10.440`, post-process `10.410` local RMSE | The trajectory ensemble is still the strongest modeling family locally, but the latest public score did not improve. |
-| Beam/PF artifact replay | V3 used V2 artifacts; V5 uses best-iteration artifact preservation | Artifact mode is now the right workflow for reproducible submission reruns. |
+| Training inventory | `773` horizontal wells and `773` typewells | Use grouped validation by well. |
+| Public test sample | `3` wells and `14,151` rows | Public score is high signal but small sample. |
+| Median hidden suffix | `74.0%` train, `72.7%` public test | Model long trajectory continuation, not short interpolation. |
+| Sampled `GR` missingness | `32.0%` | Missingness handling is core model logic. |
+| Sampled `GR`/`TVT` correlation | `-0.052` | Local log-shape alignment matters more than global correlation. |
 
-## 8. Score Progress
+## 6. Results
 
-Masked-tail validation currently favors carry-forward:
+Validation and public results show a clear progression from simple baselines to trajectory reconstruction.
 
-| Model | Mean RMSE | Median RMSE |
-|---|---:|---:|
-| `carry_forward` | 7.62 | 6.14 |
-| `blend_0.25` | 8.43 | 6.87 |
-| `damped_trend_035` | 8.99 | 7.26 |
-| `linear_trend` | 14.05 | 10.02 |
+| Stage | Local Readout | Public Score | Interpretation |
+|---|---:|---:|---|
+| Carry-forward/simple baseline | `10.281` validation RMSE | `15.883` | Strong fallback, weak geological model. |
+| Feature-tree residual model | `10.084` validation RMSE | `15.491` | Small but consistent improvement. |
+| Typewell alignment | `9.799` validation RMSE | `15.049` | Typewell `GR` matching adds useful signal. |
+| Beam/PF V1 | Historical selected run | `9.941` | Best public submission. |
+| Beam/PF V3 | Artifact replay from V2 | `10.197` | Reproducible but worse than V1. |
+| Beam/PF V5 | Best-iteration artifact workflow | `10.212` | Better artifact discipline, still worse than V1. |
 
-The feature-tree residual model improved held-out-well validation slightly:
+Latest Beam/PF local run:
 
-| Model | Validation RMSE |
+| Component | Local RMSE |
 |---|---:|
-| `carry_forward` | 10.281 |
-| `feature_tree` | 10.084 |
+| `lgb0` | 10.786 |
+| `lgb1` | 10.691 |
+| `lgb2` | 10.747 |
+| `catboost` | 10.549 |
+| ridge stack | 10.440 |
+| post-process | 10.410 |
 
-Latest Kaggle public scores:
+The local Beam/PF validation improved in later reruns, but the public score dropped versus V1. That mismatch is the current main diagnostic target.
 
-| Version | Public score | Readout |
-|---|---:|---|
-| `V3` | `15.883` | Previous carry-forward/simple baseline level. |
-| `V6` | `15.491` | Feature-tree submission improved the score by `0.392`. |
-| `V7` | `15.491` | Rerun matched V6; no additional gain. |
-| Advanced Modeling `V2` | `15.049` | Typewell-alignment features improved the best score by another `0.442`. |
-| Advanced Modeling `V3` | `15.306` | Denser offsets and residual shrinkage dropped versus V2; do not treat as best. |
-| Beam + Particle Filter `V1` | `9.941` | Selected best; full trajectory candidates plus ensemble blending produced the largest gain. |
-| Beam + Particle Filter `V3` | `10.197` | Submission-mode replay from V2 artifacts; reproducible but worse than V1. |
-| Beam + Particle Filter `V5` | `10.212` | Artifact workflow with LightGBM best-iteration preservation; still worse than V1. |
+## 7. Current Lessons
 
-The feature baseline moved the public score from `15.883` to `15.491`, typewell-alignment features improved it to `15.049`, and Beam/PF reduced it further to `9.941`. The later Beam/PF reruns scored `10.197` and `10.212`, so the selected public submission should remain V1. The key lesson is still that full `TVT` trajectory reconstruction is much stronger than row-wise residual modeling alone.
+- The task is a long hidden-suffix reconstruction problem, not a standard tabular regression task.
+- Train-only geology-top columns are useful context but cannot be used directly in test-time features.
+- Carry-forward is a strong safety baseline, but it does not capture enough trajectory shape.
+- Typewell alignment helps most when the hidden interval is long.
+- Beam/PF is the strongest modeling family in this project.
+- Public ranking can move sharply because the visible public test contains only three wells.
+- Artifact replay is necessary for reproducibility, but it does not guarantee a better public score.
 
-## 9. Next Work
+## 8. Next Work
 
-The most useful improvements now are diagnostic and controlled:
+The highest-value notebook improvement is diagnostic rather than another broad model rewrite:
 
-- compare selected V1 predictions against V3/V5 predictions by public well;
-- inspect why local validation improved from V1 to later runs while public score dropped;
-- create per-well prediction curve plots for public and validation wells;
-- compare Beam/PF with and without spatial formation imputation;
-- test whether all three LightGBM variants are worth the runtime, since CatBoost often dominates the stack;
-- tune the post-processing grid around `alpha`, `tau`, and particle-filter blend weight;
-- keep the artifact workflow, but select submissions by public score until a stronger validation split is available.
+1. Add a **Beam/PF diagnostics** section that compares V1, V3, and V5 predictions by public well when those submission files are attached.
+2. Plot **per-well `TVT` curves** to find where newer runs diverge from the selected V1 submission.
+3. Add a small **ablation table** for CatBoost-only, LightGBM-only, ridge stack, and post-processing.
+4. Test whether all three **LightGBM variants** are worth the runtime, since CatBoost often receives the largest stack weight.
+5. Tune **post-processing** only after identifying which public well caused the score drop.
 
-The best immediate notebook improvement is a small diagnostics section in `4_rogii_beam_pf.ipynb` that writes per-well prediction summaries and optional V1/V3/V5 comparison plots when submission files are available.
+The immediate priority is explaining the V1 versus V5 public-score gap before adding more model complexity.
