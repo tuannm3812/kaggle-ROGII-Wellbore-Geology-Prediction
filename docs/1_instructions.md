@@ -47,7 +47,7 @@ Held-out-well masked-tail validation is preferred because random row validation 
 | 1 | [`1_rogii_eda.ipynb`](../notebooks/1_rogii_eda.ipynb) | Inspect data layout, missingness, hidden interval length, leakage boundaries, and modeling implications. |
 | 2 | [`2_rogii_baseline.ipynb`](../notebooks/2_rogii_baseline.ipynb) | Establish carry-forward, trend, blend, and feature-tree baselines. |
 | 3 | [`3_rogii_typewell_alignment.ipynb`](../notebooks/3_rogii_typewell_alignment.ipynb) | Add typewell-aware `GR` alignment features to the residual model. |
-| 4 | [`4_rogii_beam_pf.ipynb`](../notebooks/4_rogii_beam_pf.ipynb) | Reconstruct full `TVT` trajectories with Beam/PF candidates and ensemble blending. |
+| 4 | [`4_rogii_beam_pf.ipynb`](../notebooks/4_rogii_beam_pf.ipynb) | Reconstruct full `TVT` trajectories with Beam/PF candidates, ensemble blending, and artifact replay. |
 
 Supporting analysis:
 
@@ -66,8 +66,23 @@ Key points:
 - `GR` can be missing, so interpolation and missingness indicators matter.
 - Global `GR` to `TVT` correlation is weak; local shape matching is more useful than a single global regression relationship.
 - Test does not expose training-only geology-top columns such as `ANCC`, `ASTNU`, `ASTNL`, `EGFDU`, `EGFDL`, and `BUDA`.
+- Public leaderboard movement should be interpreted carefully because the visible public test contains only `3` wells.
 
-## 6. Approach 1: EDA
+## 6. Notebook Output Summary
+
+The latest reruns provide a clear modeling sequence:
+
+| Notebook | Key Readout | Implication |
+|---|---:|---|
+| EDA | `14,151` public rows across `3` wells | Public score is useful, but small-sample. |
+| EDA | Median hidden suffix `72.7%` public and `74.0%` train | Validation must hide long tails. |
+| EDA | Sampled `GR` missingness `32.0%` | Missingness and interpolation are core model features. |
+| Baseline | Feature tree improves `10.281 -> 10.084` RMSE | Row-wise features help only slightly. |
+| Typewell alignment | Alignment model improves `10.281 -> 9.799` RMSE | Typewell `GR` matching is a stronger signal. |
+| Beam/PF | Latest run: stack `10.440`, post-process `10.410` | Trajectory reconstruction remains strongest locally. |
+| Beam/PF public | V1 `9.941`, V3 `10.197`, V5 `10.212` | Keep V1 selected; later runs support reproducibility, not a better score. |
+
+## 7. Approach 1: EDA
 
 The EDA notebook answers the basic modeling questions:
 
@@ -78,9 +93,9 @@ The EDA notebook answers the basic modeling questions:
 - Does typewell `TVT` coverage overlap the horizontal-well range?
 - Do representative wells show log-shape similarity between horizontal `GR` and typewell `GR`?
 
-Main implication: the model should treat each well as a trajectory and use grouped validation.
+Main implication: the model should treat each well as a trajectory and use grouped validation. The EDA output also shows that public test wells are few and long-hidden, so model comparisons need both local validation and leaderboard caution.
 
-## 7. Approach 2: Baseline Models
+## 8. Approach 2: Baseline Models
 
 The baseline notebook compares deterministic inference-safe models:
 
@@ -105,7 +120,9 @@ Recorded public-score progression:
 | `V6` | `15.491` | Feature-tree submission improved the score. |
 | `V7` | `15.491` | Rerun matched V6; feature baseline plateaued. |
 
-## 8. Approach 3: Typewell Alignment
+Interpretation: the feature tree is worth keeping as a sanity check, but further gains require new geological trajectory signal.
+
+## 9. Approach 3: Typewell Alignment
 
 Typewell alignment adds geological signal by comparing horizontal `GR` to typewell `GR` around plausible `TVT` offsets.
 
@@ -117,9 +134,9 @@ Feature idea:
 4. Record the best-matching offset, `GR` difference, local slope, and context spread.
 5. Train a residual model over carry-forward.
 
-Result: Advanced Modeling V2 reached public score `15.049`, improving on the feature baseline best of `15.491`.
+Result: Advanced Modeling V2 reached public score `15.049`, improving on the feature baseline best of `15.491`. The latest validation output also shows a larger local gain than the baseline feature tree: `0.481` RMSE improvement versus carry-forward.
 
-## 9. Approach 4: Beam + Particle Filter
+## 10. Approach 4: Beam + Particle Filter
 
 Beam/PF is the strongest approach currently recorded in the project.
 
@@ -132,12 +149,32 @@ It changes the problem from row-wise residual modeling to full trajectory recons
 - LightGBM/CatBoost blend candidate signals and residual corrections;
 - post-processing smooths the final `TVT` curve.
 
-Result: Beam + Particle Filter V1 reached public score `9.941`.
+Result: Beam + Particle Filter V1 reached public score `9.941` and remains the selected submission. Later artifact-workflow runs scored worse on the public leaderboard:
 
-## 10. Next Analysis
+| Version | Public Score | Readout |
+|---|---:|---|
+| `V1` | `9.941` | Selected best. |
+| `V3` | `10.197` | Submission-mode replay from V2 artifacts. |
+| `V5` | `10.212` | Artifact workflow with LightGBM best-iteration preservation. |
+
+The score drop means the next work should focus on diagnostics and reproducibility, not a wholesale model rewrite. The local Beam/PF validation improved on later runs, but the public score worsened, which suggests public-well sensitivity or validation mismatch.
+
+## 11. Recommended Next Run
+
+Use the Beam/PF notebook in two modes:
+
+1. `CFG.MODE = "train"` to create `submission.csv` and `rogii_beam_pf_artifacts.zip`.
+2. Upload the artifact zip as a private Kaggle model input.
+3. Set `CFG.MODE = "submission"` and rerun to verify artifact replay.
+4. Compare train-mode and submission-mode predictions row by row before submitting.
+
+For model selection, keep V1 selected until a new public submission beats `9.941`.
+
+## 12. Next Analysis
 
 The next useful work is targeted deep-dive analysis around Beam/PF:
 
+- V1 versus V3/V5 prediction differences by public well;
 - alignment quality by well;
 - `TVT` monotonicity and reversals;
 - spatial dip behavior;
@@ -146,7 +183,7 @@ The next useful work is targeted deep-dive analysis around Beam/PF:
 
 These analyses should explain when trajectory reconstruction works, when it fails, and which Beam/PF components deserve more tuning.
 
-## 11. Sources
+## 13. Sources
 
 - Kaggle competition overview: <https://www.kaggle.com/competitions/rogii-wellbore-geology-prediction/overview>
 - Extracted competition task brief: <https://github.com/vamseeachanta/kaggle-rogii-2026/blob/main/docs/task-brief.md>

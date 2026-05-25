@@ -18,7 +18,26 @@ The public sample shows a file-per-well sequence problem, not a flat tabular reg
 | Global `GR` to `TVT` correlation | weak | Alignment and local shape matching matter more than row-wise regression. |
 | Train-only geology tops | `ANCC`, `ASTNU`, `ASTNL`, `EGFDU`, `EGFDL`, `BUDA` | Avoid direct leakage; estimate equivalents only if needed for test. |
 
-## 3. Data Structure Insight
+## 3. Latest Notebook Readout
+
+The latest EDA run produced these reviewer-facing checks:
+
+| Check | Output | Interpretation |
+|---|---:|---|
+| Train files | `773` horizontal wells and `773` typewells | Enough wells for grouped validation and neighbor-based geology features. |
+| Public test files | `3` horizontal wells and `3` typewells | Public score can move sharply when one well changes. |
+| Submission shape | `14,151` rows and `3` public wells | The target is a long row-level suffix. |
+| Requested rows per public well | `3,836` to `6,014` | Hidden interval length varies materially by well. |
+| Train median rows | `6,576` horizontal rows | Runtime and feature generation should be well-parallelized. |
+| Train median hidden suffix | `74.0%` | Long-tail validation is the right local test. |
+| Public median hidden suffix | `72.7%` | Public wells follow the same broad hidden-tail pattern. |
+| Train median `TVT` range | `758.22` ft | A constant or naive trend can miss large vertical movement. |
+| Sampled train rows | `90,000` rows across `60` wells | EDA samples are large enough for stable missingness/correlation checks. |
+| Sampled `GR` missingness | `32.0%` | Imputation and missingness indicators should stay in the model. |
+| Sampled `MD`/`TVT` correlation | `0.413` | Measured depth gives partial trend signal. |
+| Sampled `GR`/`TVT` correlation | `-0.052` | Useful `GR` signal is local shape alignment, not global correlation. |
+
+## 4. Data Structure Insight
 
 Each well contributes two related logs:
 
@@ -27,7 +46,7 @@ Each well contributes two related logs:
 
 The key modeling problem is to map horizontal-well positions after Prediction Start onto a plausible `TVT` trajectory. The paired typewell is useful because it provides a reference `GR` signature on the `TVT` scale, but local horizontal `GR` before Prediction Start can sometimes be more informative than the typewell alone.
 
-## 4. Leakage Insight
+## 5. Leakage Insight
 
 The strongest leakage risks are:
 
@@ -39,7 +58,7 @@ The strongest leakage risks are:
 
 The practical modeling response is to mask training wells in the same pattern as test inference and build features only from visible-prefix data plus typewell inputs.
 
-## 5. Sample Plot: Hidden Interval Distribution
+## 6. Sample Plot: Hidden Interval Distribution
 
 Use this plot to show why carry-forward is only a safety baseline.
 
@@ -63,7 +82,7 @@ plt.show()
 
 Expected readout: most wells have a long hidden suffix. Validation should therefore mask tails, not random rows.
 
-## 6. Sample Chart: EDA Decision Map
+## 7. Sample Chart: EDA Decision Map
 
 ```mermaid
 flowchart LR
@@ -76,7 +95,7 @@ flowchart LR
     B --> J
 ```
 
-## 7. Recommended Charts
+## 8. Recommended Charts
 
 These charts are the most useful for explaining the modeling direction:
 
@@ -88,16 +107,17 @@ These charts are the most useful for explaining the modeling direction:
 - map view of well coordinates, colored by split or available target status;
 - typewell `TVT` coverage versus horizontal-well target range.
 
-## 8. Do We Need Deeper Analysis?
+## 9. Do We Need Deeper Analysis?
 
 Yes, but it should be targeted rather than broad.
 
 Recommended deep dives:
 
-1. **Alignment quality by well**: score known-prefix horizontal `GR` against typewell `GR` and identify wells where typewell alignment is weak.
-2. **Trajectory monotonicity and reversals**: quantify where true training `TVT` increases, decreases, or stays flat after Prediction Start.
-3. **Spatial dip behavior**: estimate local formation dip from neighboring wells and compare it with Beam/PF formation-plane features.
-4. **GR missingness patterns**: separate random gaps from long missing blocks, because they need different imputation strategies.
-5. **Per-well validation error curves**: inspect whether models fail at the start of the hidden interval, after long extrapolation, or around sharp trajectory turns.
+1. **Public-well sensitivity**: compare Beam/PF V1, V3, and V5 curves by public well to isolate which well caused the public-score drop.
+2. **Alignment quality by well**: score known-prefix horizontal `GR` against typewell `GR` and identify wells where typewell alignment is weak.
+3. **Trajectory monotonicity and reversals**: quantify where true training `TVT` increases, decreases, or stays flat after Prediction Start.
+4. **Spatial dip behavior**: estimate local formation dip from neighboring wells and compare it with Beam/PF formation-plane features.
+5. **GR missingness patterns**: separate random gaps from long missing blocks, because they need different imputation strategies.
+6. **Per-well validation error curves**: inspect whether models fail at the start of the hidden interval, after long extrapolation, or around sharp trajectory turns.
 
 These are worth adding to `1_rogii_eda.ipynb` when they change modeling decisions or explain a Beam/PF failure mode.

@@ -1,8 +1,8 @@
-# 3. Baseline Models
+# 3. Baseline And Model Results
 
 ## 1. Purpose
 
-This page documents the baseline approach and result readouts from [`2_rogii_baseline.ipynb`](../notebooks/2_rogii_baseline.ipynb).
+This page documents the baseline approach and result readouts from [`2_rogii_baseline.ipynb`](../notebooks/2_rogii_baseline.ipynb), then summarizes how later notebooks improved on that baseline.
 
 The goal of the baseline notebook is to answer one question clearly: can simple inference-safe features beat carry-forward under masked-tail validation?
 
@@ -78,6 +78,16 @@ Held-out-well validation:
 
 The feature tree improved validation by `0.197` RMSE. This is useful, but the gain is small enough that later experiments need genuinely new signal rather than only more tuning.
 
+Tail-fraction validation shows the same pattern:
+
+| Tail Fraction | Carry RMSE | Feature-Tree RMSE | Delta |
+|---:|---:|---:|---:|
+| `0.2` | 8.545 | 8.338 | -0.207 |
+| `0.3` | 9.421 | 9.171 | -0.250 |
+| `0.4` | 12.453 | 12.297 | -0.156 |
+
+The gain is consistent but small across hidden-tail lengths.
+
 ## 7. Public Score Readout
 
 | Version | Public Score | Readout |
@@ -88,6 +98,71 @@ The feature tree improved validation by `0.197` RMSE. This is useful, but the ga
 
 The feature baseline moved public score from `15.883` to `15.491`. The plateau at `15.491` motivated the typewell-alignment and Beam/PF notebooks.
 
-## 8. Interpretation
+## 8. Typewell Alignment Readout
 
-The baseline is useful as a stable reference and fallback. The small validation gain and public-score plateau suggest that future effort should focus on new trajectory signal, not broad tuning of the same row-wise feature family.
+[`3_rogii_typewell_alignment.ipynb`](../notebooks/3_rogii_typewell_alignment.ipynb) adds typewell-aware `GR` matching features.
+
+Latest validation:
+
+| Model | Validation RMSE | Delta vs Carry-Forward |
+|---|---:|---:|
+| `carry_forward` | 10.281 | 0.000 |
+| `typewell_alignment` | 9.799 | -0.481 |
+
+Tail-fraction validation:
+
+| Tail Fraction | Carry RMSE | Typewell RMSE | Delta |
+|---:|---:|---:|---:|
+| `0.2` | 8.545 | 8.362 | -0.183 |
+| `0.3` | 9.421 | 9.180 | -0.241 |
+| `0.4` | 12.453 | 11.563 | -0.890 |
+
+The alignment model helps most on the longest hidden tails, which is exactly where carry-forward is weakest. Its best public score was Advanced Modeling V2 at `15.049`.
+
+## 9. Beam/PF Readout
+
+[`4_rogii_beam_pf.ipynb`](../notebooks/4_rogii_beam_pf.ipynb) is the strongest modeling family. It builds full trajectory candidates and stacks LightGBM/CatBoost predictions.
+
+Latest local output:
+
+| Component | Local RMSE |
+|---|---:|
+| `lgb0` | 10.786 |
+| `lgb1` | 10.691 |
+| `lgb2` | 10.747 |
+| `catboost` | 10.549 |
+| average ensemble | 10.564 |
+| ridge stack | 10.440 |
+| post-process | 10.410 |
+
+Latest ridge weights:
+
+| Model | Weight |
+|---|---:|
+| `lgb0` | 0.000 |
+| `lgb1` | 0.234 |
+| `lgb2` | 0.164 |
+| `catboost` | 0.602 |
+
+CatBoost remains the dominant stack member. The zero weight on `lgb0` suggests future ablations should test whether all three LightGBM variants are still worth the runtime.
+
+Public score readout:
+
+| Beam/PF Version | Public Score | Interpretation |
+|---|---:|---|
+| `V1` | `9.941` | Selected best. |
+| `V3` | `10.197` | Artifact replay from V2; worse than V1. |
+| `V5` | `10.212` | Best-iteration artifact workflow; worse than V1. |
+
+The local validation rank did not match the public score rank. V5 has better local post-process RMSE than V1, but worse public score. This makes per-public-well diagnostics the next priority.
+
+## 10. Interpretation
+
+The baseline is useful as a stable reference and fallback. The small validation gain and public-score plateau suggest that future effort should focus on trajectory signal, not broad tuning of the same row-wise feature family.
+
+The current model-selection position is:
+
+- keep Beam/PF V1 selected because it has the best public score;
+- keep the artifact workflow because it improves reproducibility;
+- investigate why V3/V5 local validation looked strong while public score dropped;
+- prioritize per-well prediction comparison and Beam/PF component ablations over more feature-tree tuning.

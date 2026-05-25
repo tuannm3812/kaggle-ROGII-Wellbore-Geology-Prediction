@@ -12,6 +12,8 @@ Keep the root small:
 
 Avoid adding local-only folders such as `data/`, `models/`, `outputs/`, `configs/`, or `scripts/` unless the project direction changes back to local training.
 
+Large Kaggle artifacts, including trained model bundles, should stay on Kaggle as private model or dataset inputs. The repository should document them, not store them.
+
 ## 2. Notebook Naming
 
 Use numbered, stable notebook names:
@@ -62,15 +64,22 @@ Each notebook should include:
 - explicit mode flags when runtime behavior differs between training and submission;
 - Kaggle path auto-detection where practical;
 - Markdown insight cells after important plots or metrics;
-- artifact-writing cells for reusable outputs such as `submission.csv`, histories, or plots.
+- artifact-writing cells for reusable outputs such as `submission.csv`, histories, configs, model bundles, or plots.
 
 Prefer readable, self-contained notebook code over imports from local project modules. Kaggle should be able to run the notebook after attaching only the required competition datasets and model inputs.
 
-When notebook code changes, clear all outputs before committing and rerun the notebook on Kaggle to regenerate trusted outputs. Keep committed notebooks lightweight; Kaggle is the execution record.
+When notebook code changes without a fresh Kaggle rerun, clear outputs before committing. When the notebook has just been rerun on Kaggle and the outputs are being used as evidence in `docs/`, committed outputs are acceptable if they are lightweight and reviewer-relevant.
 
 Competition notebooks should not depend on internet access during final reruns. For pretrained models or runtime packages that differ from the Kaggle image, attach local Kaggle input weights or wheelhouse datasets and load them explicitly. If exploratory installation is allowed, gate it behind an explicit config flag and keep the default offline-safe.
 
-Submission notebooks must be optimized for Kaggle scoring limits. Do not run EDA, avoid unnecessary model training in scored submission paths, and keep submission mode focused on loading inputs, inference, and writing `submission.csv`.
+Submission notebooks must be optimized for Kaggle scoring limits. Do not run EDA, avoid unnecessary model training in scored submission paths, and keep submission mode focused on loading attached artifacts, running inference, and writing `submission.csv`.
+
+For train/submission workflows:
+
+- use `CFG.MODE = "train"` to build models and artifacts;
+- use `CFG.MODE = "submission"` to load artifacts and write `submission.csv`;
+- save any information needed for exact replay, such as feature columns, ensemble weights, post-processing parameters, and model best iterations;
+- verify train-mode and submission-mode predictions match before treating an artifact bundle as reusable.
 
 ## 5. Plot Style
 
@@ -91,15 +100,18 @@ Documentation should be written for a competition reviewer or teammate who wants
 - Link notebooks and docs with relative paths.
 - Keep model result pages separate by model.
 - Keep broad narrative in the root `README.md`; keep detailed evidence in focused docs.
+- Separate selected-best leaderboard results from newer experimental reruns when they differ.
+- Explain score drops plainly, especially when local validation and public leaderboard results disagree.
 
 ## 7. Git Hygiene
 
 Do not commit:
 
-- raw Kaggle audio or raw competition data;
+- raw competition data;
 - local checkpoints;
 - Kaggle working directories;
 - large embedding arrays or cached feature tables;
+- large trained model artifact zips;
 - Python caches or notebook checkpoints;
 - ad hoc experiment dumps.
 
