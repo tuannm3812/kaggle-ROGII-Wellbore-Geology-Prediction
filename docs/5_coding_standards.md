@@ -102,6 +102,8 @@ Documentation should be written for a competition reviewer or teammate who wants
 - Keep broad narrative in the root `README.md`; keep detailed evidence in focused docs.
 - Separate selected-best leaderboard results from newer experimental reruns when they differ.
 - Explain score drops plainly, especially when local validation and public leaderboard results disagree.
+- Keep docs discoverable through `docs/0_readme.md`.
+- Use a shared next-steps anchor document (`docs/4_next_steps.md`) for execution sequencing.
 
 ## 7. Git Hygiene
 
@@ -116,3 +118,26 @@ Do not commit:
 - ad hoc experiment dumps.
 
 Commit lightweight artifacts only when they directly support the written analysis, such as figures used by EDA markdown and model result pages.
+
+## 8. Commit by Function (Agent Standard)
+
+Commit by functional scope, not mixed intent.
+
+1. Keep each commit focused on one function domain:
+   - `notebooks/`: modeling, feature logic, inference pipeline, mode flags, and Kaggle runtime behavior.
+   - `docs/`: strategy, run policy, next steps, score registry, interpretation notes.
+   - `README.md` and root metadata: public-facing status, index hygiene, and result summary.
+   - `docs/6_kaggle_autosubmit_runbook.md`: files that directly affect Kaggle execution, submission process, and operational naming.
+2. Use a professional commit message with explicit scope and version context, for example:
+   - `chore(docs): add per-version important_change ledger notes for V3/V5`
+   - `chore(runbook): update kaggle autosubmit checklist and GPU monitoring commands`
+   - `feat(notebook): add reproducible artifact replay logging in submission mode`
+3. Do not mix docs and notebook behavior changes in the same commit unless they are the same closed change.
+4. For run cycles, include a short change summary in the commit body with:
+   - what function changed,
+   - which version label was targeted (for example `V1`, `V3`, `V5`),
+   - expected impact (`selected` / `diagnostic`).
+5. If a commit changes submission workflow or score records, require all of:
+   - `6_kaggle_autosubmit_runbook.md` updated if execution steps changed.
+   - `7_submission_score_registry.md` updated if score status changed.
+   - `4_next_steps.md` updated if priorities changed.

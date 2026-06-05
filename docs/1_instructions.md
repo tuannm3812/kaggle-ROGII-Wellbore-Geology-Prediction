@@ -151,11 +151,11 @@ It changes the problem from row-wise residual modeling to full trajectory recons
 
 Result: Beam + Particle Filter V1 reached public score `9.941` and remains the selected submission. Later artifact-workflow runs scored worse on the public leaderboard:
 
-| Version | Public Score | Readout |
-|---|---:|---|
-| `V1` | `9.941` | Selected best. |
-| `V3` | `10.197` | Submission-mode replay from V2 artifacts. |
-| `V5` | `10.212` | Artifact workflow with LightGBM best-iteration preservation. |
+| Version | Public Score | Important Change | Readout |
+|---|---:|---|---|
+| `V1` | `9.941` | Original public-best Beam/PF production path with full trajectory-stack baseline. | Selected best. |
+| `V3` | `10.197` | Added reproducible artifact path and versioned run logging to harden repeatability. | Submission-mode replay from V2 artifacts. |
+| `V5` | `10.212` | Added V2 artifact-bundle submission replay with best-iteration model-state preservation. | Artifact workflow with LightGBM best-iteration preservation. |
 
 The score drop means the next work should focus on diagnostics and reproducibility, not a wholesale model rewrite. The local Beam/PF validation improved on later runs, but the public score worsened, which suggests public-well sensitivity or validation mismatch.
 

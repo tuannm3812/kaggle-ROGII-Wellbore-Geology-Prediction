@@ -8,6 +8,17 @@ The competition asks participants to predict **`TVT` (True Vertical Thickness)**
 
 The strongest submitted approach in this repository is **Beam + Particle Filter V1**, with public RMSE `9.941`. Later artifact-workflow reruns improved reproducibility but scored lower on the public leaderboard, so V1 remains the selected submission.
 
+Current selected status:
+
+- `V1` remains selected for leaderboard.
+- `V3` and `V5` are diagnostic branches.
+
+Public score checkpoints:
+
+- V1: `9.941` — baseline public-best Beam/PF production path with full trajectory-stack.
+- V3: `10.197` — reproducible artifact and versioned diagnostic replay path.
+- V5: `10.212` — submission replay using V2 artifact bundle and best-iteration preservation.
+
 ## 1. Project Overview
 
 This project builds a sequence-reconstruction workflow for wellbore geology:
@@ -38,10 +49,14 @@ The key modeling lesson is that full **`TVT` trajectory reconstruction** is much
 .
 ├── README.md
 ├── docs/
+│   ├── 0_readme.md
 │   ├── 1_instructions.md
 │   ├── 2_eda_insights.md
 │   ├── 3_baseline_models.md
-│   └── coding_standards.md
+│   ├── 4_next_steps.md
+│   ├── 7_submission_score_registry.md
+│   ├── 6_kaggle_autosubmit_runbook.md
+│   └── 5_coding_standards.md
 └── notebooks/
     ├── 1_rogii_eda.ipynb
     ├── 2_rogii_baseline.ipynb
@@ -53,8 +68,14 @@ Detailed notes:
 
 - `docs/1_instructions.md`: competition framing, run order, approaches, and next analysis.
 - `docs/2_eda_insights.md`: EDA findings, sample charts, and deeper-analysis targets.
+- `docs/0_readme.md`: documentation index and consistency rules.
+- `docs/1_instructions.md`: competition framing, run order, approaches, and next analysis.
+- `docs/2_eda_insights.md`: EDA findings, sample charts, and deeper-analysis targets.
 - `docs/3_baseline_models.md`: baseline, typewell-alignment, and Beam/PF result readouts.
-- `docs/coding_standards.md`: notebook and documentation standards for this project.
+- `docs/4_next_steps.md`: current priority execution plan and completion criteria.
+- `docs/7_submission_score_registry.md`: versioned submission score history and promotion policy.
+- `docs/6_kaggle_autosubmit_runbook.md`: Kaggle GPU submission workflow.
+- `docs/5_coding_standards.md`: notebook and documentation standards for this project.
 
 ## 4. Notebook Flow
 
@@ -73,6 +94,14 @@ Beam/PF supports two runtime modes:
 |---|---|---|
 | `CFG.MODE = "train"` | Train models and produce artifacts. | `submission.csv` and `rogii_beam_pf_artifacts.zip`. |
 | `CFG.MODE = "submission"` | Load attached artifacts and submit without retraining. | `submission.csv`. |
+
+Quick sanity run pattern:
+
+```python
+# In the notebook, switch CFG.MODE and run from section 3 onward.
+CFG.MODE = "train"      # quick local path
+CFG.MODE = "submission"  # replay path (requires attached artifacts)
+```
 
 ## 5. Data Shape
 

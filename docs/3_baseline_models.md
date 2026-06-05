@@ -123,6 +123,19 @@ The alignment model helps most on the longest hidden tails, which is exactly whe
 
 [`4_rogii_beam_pf.ipynb`](../notebooks/4_rogii_beam_pf.ipynb) is the strongest modeling family. It builds full trajectory candidates and stacks LightGBM/CatBoost predictions.
 
+Current model-selection status:
+
+- `V1` remains selected for the leaderboard (`9.941`).
+- `V3` and `V5` are maintained as diagnostic branches (`10.197`, `10.212` respectively).
+
+Quick sanity command pattern:
+
+```python
+# in 4_rogii_beam_pf.ipynb, set mode before running train/submission sections
+CFG.MODE = "train"      # local rebuild + diagnostics
+CFG.MODE = "submission" # attached artifact replay + replay checks
+```
+
 Latest local output:
 
 | Component | Local RMSE |
@@ -148,11 +161,11 @@ CatBoost remains the dominant stack member. The zero weight on `lgb0` suggests f
 
 Public score readout:
 
-| Beam/PF Version | Public Score | Interpretation |
-|---|---:|---|
-| `V1` | `9.941` | Selected best. |
-| `V3` | `10.197` | Artifact replay from V2; worse than V1. |
-| `V5` | `10.212` | Best-iteration artifact workflow; worse than V1. |
+| Beam/PF Version | Public Score | Important Change | Interpretation |
+|---|---:|---|---|
+| `V1` | `9.941` | Initial public-competitive Beam/PF production path with full stack and no artifact replay dependency. | Selected best. |
+| `V3` | `10.197` | Added reproducible artifact + diagnostic replay path and version log export for easier rerun audit. | Artifact replay from V2; worse than V1. |
+| `V5` | `10.212` | Submission-mode replay with V2 artifact bundle and best-iteration preservation; public score did not beat selected baseline. | Best-iteration artifact workflow; worse than V1. |
 
 The local validation rank did not match the public score rank. V5 has better local post-process RMSE than V1, but worse public score. This makes per-public-well diagnostics the next priority.
 
