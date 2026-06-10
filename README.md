@@ -57,11 +57,15 @@ The key modeling lesson is that full **`TVT` trajectory reconstruction** is much
 │   ├── 7_submission_score_registry.md
 │   ├── 6_kaggle_autosubmit_runbook.md
 │   └── 5_coding_standards.md
+├── kaggle_kernel/
+│   ├── 5_rogii_beam_pf_submission_replay.ipynb
+│   └── kernel-metadata.json
 └── notebooks/
     ├── 1_rogii_eda.ipynb
     ├── 2_rogii_baseline.ipynb
     ├── 3_rogii_typewell_alignment.ipynb
-    └── 4_rogii_beam_pf.ipynb
+    ├── 4_rogii_beam_pf.ipynb
+    └── 5_rogii_beam_pf_submission_replay.ipynb
 ```
 
 Detailed notes:
@@ -87,6 +91,19 @@ Run the notebooks on Kaggle in order.
 | 2 | `notebooks/2_rogii_baseline.ipynb` | Baseline | Carry-forward, trend, blend, and feature-tree residual model. |
 | 3 | `notebooks/3_rogii_typewell_alignment.ipynb` | Alignment model | Typewell-aware `GR` alignment features and residual model. |
 | 4 | `notebooks/4_rogii_beam_pf.ipynb` | Selected modeling path | Beam/PF candidates, ensemble blending, `submission.csv`, artifact zip. |
+| 5 | `notebooks/5_rogii_beam_pf_submission_replay.ipynb` | Clean Kaggle replay path | Stable submission replay notebook for updating the same Kaggle kernel. |
+
+Use [`kaggle_kernel/`](./kaggle_kernel) as the stable Kaggle push folder for the current Beam/PF submission replay notebook. Its metadata points to the clean Kaggle kernel slug:
+
+```text
+tuannm3812/rogii-beam-pf-submission-replay-cpu
+```
+
+Push updates from that folder when you want Kaggle to update the same notebook instead of creating another timestamped copy:
+
+```bash
+/Users/tuanm.nguyen/Library/Python/3.9/bin/kaggle kernels push -p kaggle_kernel
+```
 
 Beam/PF supports two runtime modes:
 

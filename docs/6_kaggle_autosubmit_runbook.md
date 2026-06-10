@@ -3,7 +3,7 @@
 ## 1) Purpose
 
 This runbook defines the production workflow for running 
-[`notebooks/4_rogii_beam_pf.ipynb`](../notebooks/4_rogii_beam_pf.ipynb) on Kaggle with GPU and in-notebook submission.
+[`notebooks/5_rogii_beam_pf_submission_replay.ipynb`](../notebooks/5_rogii_beam_pf_submission_replay.ipynb) on Kaggle with a stable notebook slug and in-notebook submission.
 
 Use this whenever launching a new version of the Beam + Particle Filter notebook.
 
@@ -11,6 +11,7 @@ Use this whenever launching a new version of the Beam + Particle Filter notebook
 
 - Run in Kaggle notebook mode: `CFG.MODE = "train"` (artifact build) or `CFG.MODE = "submission"` (replay + submit path).
 - Use in-notebook submission (Kaggle submission API endpoint is not used outside the notebook).
+- Use `kaggle_kernel/` as the default clean push folder for submission replay updates.
 - Keep `kaggle_runs/` as a local scratch workspace only (not committed to git).
 - Keep notebook logging professional and non-datetime-only.
 
@@ -24,7 +25,22 @@ Use this whenever launching a new version of the Beam + Particle Filter notebook
 
 ## 4) Naming and Versioning Standards
 
-Use a fixed professional slug for production-style launches.
+Use a fixed professional slug for each production-style launch. Do not put datetimes in `id` or `title`.
+
+Default clean submission replay kernel:
+
+```text
+run_name=rogii-beam-pf-submission-replay-cpu
+kaggle_slug=${run_name}
+kernel_id=tuannm3812/${kaggle_slug}
+```
+
+- `id` must be exactly: `tuannm3812/rogii-beam-pf-submission-replay-cpu`
+- `title` must be exactly: `rogii-beam-pf-submission-replay-cpu`
+- `code_file` must be `5_rogii_beam_pf_submission_replay.ipynb`
+- Push folder should be `kaggle_kernel/`
+
+GPU training kernel, when a fresh artifact build is needed:
 
 ```text
 run_name=rogii-beam-pf-gpu-v2-production
@@ -42,6 +58,16 @@ Notebook metadata and runtime logs must agree on this naming pattern.
 
 ## 5) Scratch Workspace Layout
 
+Stable push workspace:
+
+```text
+kaggle_kernel/
+├── 5_rogii_beam_pf_submission_replay.ipynb
+└── kernel-metadata.json
+```
+
+Local scratch workspaces:
+
 ```text
 kaggle_runs/
 └── rogii-beam-gpu-<run-label>/
@@ -55,44 +81,43 @@ It does not need to match Kaggle slug as long as inside `kernel-metadata.json` t
 ## 6) Pre-Run Checklist
 
 1. Confirm notebook is ready:
-   - `notebooks/4_rogii_beam_pf.ipynb` has final changes.
+   - `notebooks/5_rogii_beam_pf_submission_replay.ipynb` has final replay changes.
    - `professional-version-log` and `auto-submit-notebook` blocks updated.
    - `VERSION_RUN_NAME` is descriptive and non-datetime-only.
 2. Confirm workspace:
-   - `mkdir -p kaggle_runs`
-   - `rm -rf` stale folders you do not need.
+   - `kaggle_kernel/5_rogii_beam_pf_submission_replay.ipynb` is synced from the clean replay notebook.
+   - `kaggle_kernel/kernel-metadata.json` uses the stable replay slug.
+   - `kaggle_runs/` is only used for temporary experiments.
 3. Confirm metadata file exists and matches the naming policy.
 
-## 7) Create Run Folder (Repeatable)
+## 7) Sync Clean Kaggle Kernel Folder
 
 ```bash
-cd /Users/tuanm.nguyen/Documents/kaggle-ROGII-Wellbore-Geology-Prediction
+cd "/Users/tuanm.nguyen/Library/CloudStorage/GoogleDrive-tuannm3812@gmail.com/My Drive/10_Github/2. Kaggle/kaggle-ROGII-Wellbore-Geology-Prediction"
 
-# local labels
-RUN_DIR=kaggle_runs/rogii-beam-pf-v2-production
-mkdir -p "$RUN_DIR"
+mkdir -p kaggle_kernel
+cp notebooks/5_rogii_beam_pf_submission_replay.ipynb kaggle_kernel/5_rogii_beam_pf_submission_replay.ipynb
 
-# notebook source for this run
-cp notebooks/4_rogii_beam_pf.ipynb "$RUN_DIR/4_rogii_beam_pf.ipynb"
-
-cat > "$RUN_DIR/kernel-metadata.json" <<'JSON'
+cat > kaggle_kernel/kernel-metadata.json <<'JSON'
 {
-  "id": "tuannm3812/rogii-beam-pf-gpu-v2-production",
-  "title": "rogii-beam-pf-gpu-v2-production",
-  "code_file": "4_rogii_beam_pf.ipynb",
+  "id": "tuannm3812/rogii-beam-pf-submission-replay-cpu",
+  "title": "rogii-beam-pf-submission-replay-cpu",
+  "code_file": "5_rogii_beam_pf_submission_replay.ipynb",
   "language": "python",
   "kernel_type": "notebook",
   "is_private": true,
-  "enable_gpu": true,
+  "enable_gpu": false,
   "enable_tpu": false,
   "enable_internet": false,
   "dataset_sources": [],
   "competition_sources": [
     "rogii-wellbore-geology-prediction"
   ],
-  "kernel_sources": [],
+  "kernel_sources": [
+    "tuannm3812/rogii-beam-gpu-v2-073300"
+  ],
   "model_sources": [],
-  "description": "ROGII Beam + PF production branch: single-GPU CatBoost devices=0; version log + structured in-notebook submit metadata."
+  "description": "ROGII Beam + PF submission replay CPU notebook. Stable clean Kaggle kernel for artifact replay and submission.csv generation."
 }
 JSON
 ```
@@ -100,7 +125,7 @@ JSON
 ## 8) Push to Kaggle
 
 ```bash
-/Users/tuanm.nguyen/Library/Python/3.9/bin/kaggle kernels push -p "$RUN_DIR"
+/Users/tuanm.nguyen/Library/Python/3.9/bin/kaggle kernels push -p kaggle_kernel
 ```
 
 If output returns:
@@ -110,7 +135,7 @@ If output returns:
 ## 9) Monitor and Collect Outputs
 
 ```bash
-RUN_SLUG=rogii-beam-pf-gpu-v2-production
+RUN_SLUG=rogii-beam-pf-submission-replay-cpu
 KERNEL_ID=tuannm3812/$RUN_SLUG
 OUTPUT_DIR=/tmp/kaggle_output/$RUN_SLUG
 
