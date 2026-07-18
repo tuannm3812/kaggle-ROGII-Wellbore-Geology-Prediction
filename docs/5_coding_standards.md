@@ -141,3 +141,16 @@ Commit by functional scope, not mixed intent.
    - `6_kaggle_autosubmit_runbook.md` updated if execution steps changed.
    - `7_submission_score_registry.md` updated if score status changed.
    - `4_next_steps.md` updated if priorities changed.
+
+## 9. Kaggle Submission Method
+
+Prefer submitting via Kaggle's **notebook submission** ("Submit to
+Competition" from within the notebook) over uploading a `submission.csv`
+generated elsewhere. Kaggle re-executes the notebook end-to-end, which
+verifies the leaderboard result actually matches the committed code. See the
+shared `coding-standards/coding_standards.md` (§11) in the GitHub root for
+the full rule.
+
+Before submitting, confirm the notebook version matches what's recorded in
+this project's results doc, and log the submission (version, score, date)
+after it completes.
