@@ -83,3 +83,15 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
 - Public and local validation mismatch explained and logged by well-level evidence.
 - Documentation updated with exactly one “selected” version and one “diagnostic” run family.
 - No generated Kaggle folders/files are staged in git after each run cycle.
+
+## 7. Execution Checklist (Next Run Cycle)
+
+- Keep one notebook-only controlled change per Kaggle run cycle.
+- In train mode, write candidate settings to notebook variables:
+  - `CFG.SEED`, beam search tuple list, PF settings, and postprocess grid.
+- Record these from output:
+  - local tail RMSE,
+  - alignment diagnostics by well (`mean_hidden_tail_length`, `monotonicity_violations`),
+  - component ablation table.
+- In submission mode, confirm `validate_replay_metadata(...)` succeeds before interpreting leaderboard output.
+- If leaderboard improves 9.941, promote immediately and move everything else to diagnostic-only status.
