@@ -18,7 +18,7 @@ Use this whenever launching a new version of the Beam + Particle Filter notebook
 ## 3) Required Environment
 
 - Kaggle CLI authenticated and available:
-  - `/Users/tuanm.nguyen/Library/Python/3.9/bin/kaggle`
+  - `/Users/tuannm3812/Library/Python/3.9/bin/kaggle`
 - Active network.
 - Kaggle username: `tuannm3812`
 - Competition: `rogii-wellbore-geology-prediction`
@@ -93,7 +93,7 @@ It does not need to match Kaggle slug as long as inside `kernel-metadata.json` t
 ## 7) Sync Clean Kaggle Kernel Folder
 
 ```bash
-cd "/Users/tuanm.nguyen/Library/CloudStorage/GoogleDrive-tuannm3812@gmail.com/My Drive/10_Github/2. Kaggle/kaggle-ROGII-Wellbore-Geology-Prediction"
+cd "/Users/tuannm3812/Documents/GitHub/2. Kaggle/kaggle-ROGII-Wellbore-Geology-Prediction"
 
 mkdir -p kaggle_kernel
 cp notebooks/5_rogii_beam_pf_submission_replay.ipynb kaggle_kernel/5_rogii_beam_pf_submission_replay.ipynb
@@ -125,7 +125,7 @@ JSON
 ## 8) Push to Kaggle
 
 ```bash
-/Users/tuanm.nguyen/Library/Python/3.9/bin/kaggle kernels push -p kaggle_kernel
+/Users/tuannm3812/Library/Python/3.9/bin/kaggle kernels push -p kaggle_kernel
 ```
 
 If output returns:
@@ -139,8 +139,8 @@ RUN_SLUG=rogii-beam-pf-submission-replay-cpu
 KERNEL_ID=tuannm3812/$RUN_SLUG
 OUTPUT_DIR=/tmp/kaggle_output/$RUN_SLUG
 
-/Users/tuanm.nguyen/Library/Python/3.9/bin/kaggle kernels status "$KERNEL_ID"
-/Users/tuanm.nguyen/Library/Python/3.9/bin/kaggle kernels output "$KERNEL_ID" -p "$OUTPUT_DIR"
+/Users/tuannm3812/Library/Python/3.9/bin/kaggle kernels status "$KERNEL_ID"
+/Users/tuannm3812/Library/Python/3.9/bin/kaggle kernels output "$KERNEL_ID" -p "$OUTPUT_DIR"
 ls -R "$OUTPUT_DIR"
 ```
 
@@ -158,7 +158,7 @@ Key success checks in the log:
 ## 10) Validate Competition Submission
 
 ```bash
-/Users/tuanm.nguyen/Library/Python/3.9/bin/kaggle competitions submissions -c rogii-wellbore-geology-prediction
+/Users/tuannm3812/Library/Python/3.9/bin/kaggle competitions submissions -c rogii-wellbore-geology-prediction
 ```
 
 Confirm latest submission status is `SubmissionStatus.COMPLETE` and compare description message to the run metadata.

@@ -23,7 +23,7 @@
 ### 2.2 During run
 
 - Push with:
-  - `/Users/tuanm.nguyen/Library/Python/3.9/bin/kaggle kernels push -p kaggle_runs/<run-folder>`
+  - `/Users/tuannm3812/Library/Python/3.9/bin/kaggle kernels push -p kaggle_runs/<run-folder>`
 - Poll status until COMPLETE before output collection.
 - Pull outputs to a short-lived folder and inspect:
   - `version_log.jsonl`

@@ -102,7 +102,7 @@ tuannm3812/rogii-beam-pf-submission-replay-cpu
 Push updates from that folder when you want Kaggle to update the same notebook instead of creating another timestamped copy:
 
 ```bash
-/Users/tuanm.nguyen/Library/Python/3.9/bin/kaggle kernels push -p kaggle_kernel
+/Users/tuannm3812/Library/Python/3.9/bin/kaggle kernels push -p kaggle_kernel
 ```
 
 Beam/PF supports two runtime modes:
