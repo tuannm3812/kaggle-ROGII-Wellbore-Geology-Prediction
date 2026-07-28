@@ -1,7 +1,7 @@
 {
   "id": "tuannm3812/rogii-beam-pf-submission-replay-cpu",
   "title": "rogii-beam-pf-submission-replay-cpu",
-  "code_file": "5_rogii_beam_pf_submission_replay.ipynb",
+  "code_file": "4_rogii_beam_pf.ipynb",
   "language": "python",
   "kernel_type": "notebook",
   "is_private": true,
@@ -16,5 +16,5 @@
     "tuannm3812/rogii-beam-gpu-v2-073300"
   ],
   "model_sources": [],
-  "description": "ROGII Beam + PF submission replay CPU notebook. Stable clean Kaggle kernel for artifact replay and submission.csv generation."
+  "description": "ROGII Beam + PF submission replay CPU kernel. Runs notebooks/4_rogii_beam_pf.ipynb under a stable slug with CFG.MODE set to submission for artifact replay and submission.csv generation."
 }

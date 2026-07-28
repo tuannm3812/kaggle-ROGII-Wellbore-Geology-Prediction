@@ -54,32 +54,29 @@ The key modeling lesson is that full **`TVT` trajectory reconstruction** is much
 │   ├── 2_eda_insights.md
 │   ├── 3_baseline_models.md
 │   ├── 4_next_steps.md
-│   ├── 7_submission_score_registry.md
+│   ├── 5_coding_standards.md
 │   ├── 6_kaggle_autosubmit_runbook.md
-│   └── 5_coding_standards.md
+│   └── 7_submission_score_registry.md
 ├── kaggle_kernel/
-│   ├── 5_rogii_beam_pf_submission_replay.ipynb
+│   ├── 4_rogii_beam_pf.ipynb
 │   └── kernel-metadata.json
 └── notebooks/
     ├── 1_rogii_eda.ipynb
     ├── 2_rogii_baseline.ipynb
     ├── 3_rogii_typewell_alignment.ipynb
-    ├── 4_rogii_beam_pf.ipynb
-    └── 5_rogii_beam_pf_submission_replay.ipynb
+    └── 4_rogii_beam_pf.ipynb
 ```
 
 Detailed notes:
 
-- `docs/1_instructions.md`: competition framing, run order, approaches, and next analysis.
-- `docs/2_eda_insights.md`: EDA findings, sample charts, and deeper-analysis targets.
 - `docs/0_readme.md`: documentation index and consistency rules.
 - `docs/1_instructions.md`: competition framing, run order, approaches, and next analysis.
 - `docs/2_eda_insights.md`: EDA findings, sample charts, and deeper-analysis targets.
 - `docs/3_baseline_models.md`: baseline, typewell-alignment, and Beam/PF result readouts.
 - `docs/4_next_steps.md`: current priority execution plan and completion criteria.
-- `docs/7_submission_score_registry.md`: versioned submission score history and promotion policy.
-- `docs/6_kaggle_autosubmit_runbook.md`: Kaggle GPU submission workflow.
 - `docs/5_coding_standards.md`: notebook and documentation standards for this project.
+- `docs/6_kaggle_autosubmit_runbook.md`: Kaggle GPU submission workflow.
+- `docs/7_submission_score_registry.md`: versioned submission score history and promotion policy.
 
 ## 4. Notebook Flow
 
@@ -91,9 +88,13 @@ Run the notebooks on Kaggle in order.
 | 2 | `notebooks/2_rogii_baseline.ipynb` | Baseline | Carry-forward, trend, blend, and feature-tree residual model. |
 | 3 | `notebooks/3_rogii_typewell_alignment.ipynb` | Alignment model | Typewell-aware `GR` alignment features and residual model. |
 | 4 | `notebooks/4_rogii_beam_pf.ipynb` | Selected modeling path | Beam/PF candidates, ensemble blending, `submission.csv`, artifact zip. |
-| 5 | `notebooks/5_rogii_beam_pf_submission_replay.ipynb` | Clean Kaggle replay path | Stable submission replay notebook for updating the same Kaggle kernel. |
 
-Use [`kaggle_kernel/`](./kaggle_kernel) as the stable Kaggle push folder for the current Beam/PF submission replay notebook. Its metadata points to the clean Kaggle kernel slug:
+`notebooks/4_rogii_beam_pf.ipynb` is the single source notebook for both GPU
+training and CPU submission-replay pushes — it supports both `CFG.MODE`
+values natively, so there is no separate replay notebook to keep in sync.
+Use [`kaggle_kernel/`](./kaggle_kernel) as the stable Kaggle push folder that
+holds a synced copy of that same notebook for submission-replay pushes. Its
+metadata points to the clean Kaggle kernel slug:
 
 ```text
 tuannm3812/rogii-beam-pf-submission-replay-cpu
@@ -189,10 +190,18 @@ The local Beam/PF validation improved in later reruns, but the public score drop
 
 The highest-value notebook improvement is diagnostic rather than another broad model rewrite:
 
-1. Add a **Beam/PF diagnostics** section that compares V1, V3, and V5 predictions by public well when those submission files are attached.
-2. Plot **per-well `TVT` curves** to find where newer runs diverge from the selected V1 submission.
-3. Add a small **ablation table** for CatBoost-only, LightGBM-only, ridge stack, and post-processing.
-4. Test whether all three **LightGBM variants** are worth the runtime, since CatBoost often receives the largest stack weight.
-5. Tune **post-processing** only after identifying which public well caused the score drop.
+1. **Run the V1 vs. V3/V5 per-well diagnostic.** The comparison tooling
+   (`align_predictions`, `compare_versions`, `build_alignment_diagnostics`
+   in notebook 4's "Superpowers Plan" section) already exists but has not
+   been run against the real attached submission files yet — still the
+   top-priority blocker for trusting local validation over the public
+   leaderboard.
+2. **LightGBM-variant ablation (in progress).** `lgb0` carries a `0.000`
+   ridge weight and `lgb1` only `0.234`; `run_component_ablation_matrix()`
+   was extended with `disable_lgb0` / `disable_lgb0_lgb1` rows and a GPU
+   train-mode run is underway to check whether dropping either changes
+   local tail RMSE, so the runtime can be cut if not.
+3. Tune **post-processing** only after the per-well diagnostic identifies
+   which public well caused the V3/V5 score drop.
 
-The immediate priority is explaining the V1 versus V5 public-score gap before adding more model complexity.
+The immediate priority is explaining the V1 versus V3/V5 public-score gap before adding more model complexity.

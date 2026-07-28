@@ -2,10 +2,17 @@
 
 ## 1) Purpose
 
-This runbook defines the production workflow for running 
-[`notebooks/5_rogii_beam_pf_submission_replay.ipynb`](../notebooks/5_rogii_beam_pf_submission_replay.ipynb) on Kaggle with a stable notebook slug and in-notebook submission.
+This runbook defines the production workflow for running
+[`notebooks/4_rogii_beam_pf.ipynb`](../notebooks/4_rogii_beam_pf.ipynb) on Kaggle with a stable notebook slug and in-notebook submission.
 
 Use this whenever launching a new version of the Beam + Particle Filter notebook.
+
+Note: `notebooks/4_rogii_beam_pf.ipynb` is the single source notebook for
+both GPU training and CPU submission-replay pushes; only the pushed
+`kernel-metadata.json` (GPU on/off, kernel slug) and the in-notebook
+`CFG.MODE` value differ between the two run types. A separate
+`5_rogii_beam_pf_submission_replay.ipynb` twin previously existed and was
+retired because it required manual, error-prone syncing with notebook 4.
 
 ## 2) Current Run Policy
 
@@ -37,7 +44,7 @@ kernel_id=tuannm3812/${kaggle_slug}
 
 - `id` must be exactly: `tuannm3812/rogii-beam-pf-submission-replay-cpu`
 - `title` must be exactly: `rogii-beam-pf-submission-replay-cpu`
-- `code_file` must be `5_rogii_beam_pf_submission_replay.ipynb`
+- `code_file` must be `4_rogii_beam_pf.ipynb`
 - Push folder should be `kaggle_kernel/`
 
 GPU training kernel, when a fresh artifact build is needed:
@@ -62,7 +69,7 @@ Stable push workspace:
 
 ```text
 kaggle_kernel/
-├── 5_rogii_beam_pf_submission_replay.ipynb
+├── 4_rogii_beam_pf.ipynb
 └── kernel-metadata.json
 ```
 
@@ -81,12 +88,12 @@ It does not need to match Kaggle slug as long as inside `kernel-metadata.json` t
 ## 6) Pre-Run Checklist
 
 1. Confirm notebook is ready:
-   - `notebooks/5_rogii_beam_pf_submission_replay.ipynb` has final replay changes.
+   - `notebooks/4_rogii_beam_pf.ipynb` has final replay changes.
    - `professional-version-log` and `auto-submit-notebook` blocks updated.
    - `VERSION_RUN_NAME` is descriptive and non-datetime-only.
 2. Confirm workspace:
-   - `kaggle_kernel/5_rogii_beam_pf_submission_replay.ipynb` is synced from the clean replay notebook.
-   - `kaggle_kernel/kernel-metadata.json` uses the stable replay slug.
+   - `kaggle_kernel/4_rogii_beam_pf.ipynb` is synced from `notebooks/4_rogii_beam_pf.ipynb`.
+   - `kaggle_kernel/kernel-metadata.json` uses the stable replay slug and `enable_gpu: false`.
    - `kaggle_runs/` is only used for temporary experiments.
 3. Confirm metadata file exists and matches the naming policy.
 
@@ -96,13 +103,13 @@ It does not need to match Kaggle slug as long as inside `kernel-metadata.json` t
 cd "/Users/tuannm3812/Documents/GitHub/2. Kaggle/kaggle-ROGII-Wellbore-Geology-Prediction"
 
 mkdir -p kaggle_kernel
-cp notebooks/5_rogii_beam_pf_submission_replay.ipynb kaggle_kernel/5_rogii_beam_pf_submission_replay.ipynb
+cp notebooks/4_rogii_beam_pf.ipynb kaggle_kernel/4_rogii_beam_pf.ipynb
 
 cat > kaggle_kernel/kernel-metadata.json <<'JSON'
 {
   "id": "tuannm3812/rogii-beam-pf-submission-replay-cpu",
   "title": "rogii-beam-pf-submission-replay-cpu",
-  "code_file": "5_rogii_beam_pf_submission_replay.ipynb",
+  "code_file": "4_rogii_beam_pf.ipynb",
   "language": "python",
   "kernel_type": "notebook",
   "is_private": true,
@@ -117,10 +124,14 @@ cat > kaggle_kernel/kernel-metadata.json <<'JSON'
     "tuannm3812/rogii-beam-gpu-v2-073300"
   ],
   "model_sources": [],
-  "description": "ROGII Beam + PF submission replay CPU notebook. Stable clean Kaggle kernel for artifact replay and submission.csv generation."
+  "description": "ROGII Beam + PF submission replay CPU kernel. Runs notebooks/4_rogii_beam_pf.ipynb under a stable slug with CFG.MODE set to submission for artifact replay and submission.csv generation."
 }
 JSON
 ```
+
+After pushing, open the kernel on Kaggle and set `CFG.MODE = "submission"`
+before running (or `CFG.MODE = "train"` for a GPU rebuild) — the mode is a
+manual in-notebook toggle, not something `kernel-metadata.json` controls.
 
 ## 8) Push to Kaggle
 
