@@ -81,7 +81,25 @@ For train/submission workflows:
 - save any information needed for exact replay, such as feature columns, ensemble weights, post-processing parameters, and model best iterations;
 - verify train-mode and submission-mode predictions match before treating an artifact bundle as reusable.
 
-## 5. Plot Style
+## 5. Feature Engineering And Leakage Prevention
+
+- Only use fields available at inference time in both train and test: exclude
+  train-only geology-top columns (`ANCC`, `ASTNU`, `ASTNL`, `EGFDU`, `EGFDL`,
+  `BUDA`) from any feature, even indirectly (no target encoding or aggregate
+  derived from them).
+- Never let `TVT` or post-Prediction-Start `TVT_input` reach a feature for
+  rows past the hidden boundary. When masking a training well's tail for
+  local validation, mask it the same way the competition hides it (drop
+  `TVT_input` after the mask point, not just the target).
+- Validation must be well-grouped: a given `WELLNAME` (and its paired
+  typewell) stays entirely in one fold. Row-level random splits leak
+  trajectory context across the hidden boundary and will overstate local
+  RMSE improvements.
+- When adding a new feature family (alignment offsets, dip estimates, etc.),
+  confirm it is computable from the visible prefix plus typewell inputs
+  alone before wiring it into training.
+
+## 6. Plot Style
 
 Use the Viridis palette as the default visual language across notebooks:
 
@@ -90,7 +108,7 @@ Use the Viridis palette as the default visual language across notebooks:
 - Change color palettes only when a specific chart needs clearer contrast, semantic coloring, or accessibility improvement.
 - Keep chart titles short and analytical; avoid decorative styling.
 
-## 6. Documentation Style
+## 7. Documentation Style
 
 Documentation should be written for a competition reviewer or teammate who wants the reasoning quickly:
 
@@ -105,7 +123,7 @@ Documentation should be written for a competition reviewer or teammate who wants
 - Keep docs discoverable through `docs/0_readme.md`.
 - Use a shared next-steps anchor document (`docs/4_next_steps.md`) for execution sequencing.
 
-## 7. Git Hygiene
+## 8. Git Hygiene
 
 Do not commit:
 
@@ -119,7 +137,7 @@ Do not commit:
 
 Commit lightweight artifacts only when they directly support the written analysis, such as figures used by EDA markdown and model result pages.
 
-## 8. Commit by Function (Agent Standard)
+## 9. Commit by Function (Agent Standard)
 
 Commit by functional scope, not mixed intent.
 
@@ -142,7 +160,32 @@ Commit by functional scope, not mixed intent.
    - `7_submission_score_registry.md` updated if score status changed.
    - `4_next_steps.md` updated if priorities changed.
 
-## 9. Kaggle Submission Method
+## 10. Pre-Commit / Pre-Push Workflow
+
+Before staging anything:
+
+1. Run `git status --short` and review every path; don't blind `git add -A`.
+2. If notebook code changed, either rerun it on Kaggle or clear its outputs
+   before committing (see §4).
+3. Run verification proportional to the change:
+   - Feature/model logic changes: rerun the relevant local validation cell
+     and confirm the well-grouped masked-tail RMSE is reported.
+   - Notebook changes: confirm the notebook JSON is well-formed and the
+     output-clearing rule was followed.
+   - Docs-only changes: check relative links and any scores/dates cited.
+4. Stage only the intended change; run `git diff --cached --stat` as a final
+   check for stray data files, credentials, or generated artifacts.
+5. Push without force; confirm the commit landed on the expected branch.
+
+For a competition submission specifically, also confirm before submitting:
+
+- The generated artifact (`submission.csv`, artifact zip) was regenerated
+  from the current notebook, not a stale copy.
+- Train-mode and submission-mode predictions match row-by-row (per §4).
+- The result (version, score, date) is recorded in
+  [7_submission_score_registry.md](./7_submission_score_registry.md).
+
+## 11. Kaggle Submission Method
 
 Prefer submitting via Kaggle's **notebook submission** ("Submit to
 Competition" from within the notebook) over uploading a `submission.csv`

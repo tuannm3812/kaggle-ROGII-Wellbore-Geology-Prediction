@@ -15,7 +15,7 @@ This folder is the project documentation source of truth for analysis, results, 
 - [4_next_steps.md](./4_next_steps.md)
   - Current short-term execution plan and priority order.
 - [5_coding_standards.md](./5_coding_standards.md)
-  - Style and collaboration conventions for notebooks/docs; includes commit-by-function, scoped messaging protocol.
+  - Style and collaboration conventions for notebooks/docs; includes leakage-prevention rules, commit-by-function, and a pre-commit/pre-push checklist.
 - [6_kaggle_autosubmit_runbook.md](./6_kaggle_autosubmit_runbook.md)
   - Kaggle GPU runbook and submission workflow.
 - [7_submission_score_registry.md](./7_submission_score_registry.md)
