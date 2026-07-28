@@ -196,11 +196,13 @@ The highest-value notebook improvement is diagnostic rather than another broad m
    been run against the real attached submission files yet — still the
    top-priority blocker for trusting local validation over the public
    leaderboard.
-2. **LightGBM-variant ablation (in progress).** `lgb0` carries a `0.000`
-   ridge weight and `lgb1` only `0.234`; `run_component_ablation_matrix()`
-   was extended with `disable_lgb0` / `disable_lgb0_lgb1` rows and a GPU
-   train-mode run is underway to check whether dropping either changes
-   local tail RMSE, so the runtime can be cut if not.
+2. **LightGBM-variant ablation (done, diagnostic-only).** A 2026-07-28
+   GPU train run confirmed dropping `lgb0` costs only `+0.0007` local
+   tail RMSE (`10.3549 -> 10.3556`); dropping `lgb0`+`lgb1` together costs
+   `+0.0113`. `lgb0` is being removed from `LGB_CONFIGS` next iteration to
+   cut runtime and artifact size. See
+   [docs/4_next_steps.md §7](docs/4_next_steps.md#7-run-log) for the full
+   ablation table — no submission was made from this run.
 3. Tune **post-processing** only after the per-well diagnostic identifies
    which public well caused the V3/V5 score drop.
 

@@ -68,7 +68,7 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
 
 1. Explain V1 vs V3/V5 public gap with per-well prediction diff on public rows.
 2. Add failure-mode analysis for monotonicity reversals and tail-start error spikes.
-3. Evaluate lightgbm variant relevance with an ablation matrix using local validation + public sanity checks.
+3. Evaluate lightgbm variant relevance with an ablation matrix using local validation + public sanity checks. Local-validation half done 2026-07-28 (see [Run Log](#7-run-log)); public sanity check still pending (no submission made yet).
 4. Add a stable `beam_pf` artifact audit checklist in runbook checklists.
 
 ## 5. Investigation Priority (Secondary)
@@ -84,7 +84,44 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
 - Documentation updated with exactly one “selected” version and one “diagnostic” run family.
 - No generated Kaggle folders/files are staged in git after each run cycle.
 
-## 7. Execution Checklist (Next Run Cycle)
+## 7. Run Log
+
+### 2026-07-28: LightGBM Component Ablation (Diagnostic, Not Submitted)
+
+- Kernel: `tuannm3812/rogii-beam-pf-gpu-v2-production`, `CFG.MODE = "train"`.
+- Change under test: added `disable_lgb0` and `disable_lgb0_lgb1` rows to
+  `run_component_ablation_matrix()` (no retrain needed; reuses this run's
+  own OOF/test predictions).
+- Local ablation result (`beam_pf_ablation_matrix.csv`):
+
+  | component_set | local_tail_rmse | delta vs full |
+  |---|---:|---:|
+  | full | 10.3549 | 0.000 |
+  | disable_lgb0 | 10.3556 | +0.0007 |
+  | disable_lgb0_lgb1 | 10.3663 | +0.0113 |
+  | disable_postprocess | 10.3926 | +0.0377 |
+  | disable_ensemble | 10.4512 | +0.0963 |
+  | disable_catboost | 10.5158 | +0.1609 |
+
+- Ridge weights this run: `lgb0=0.058, lgb1=0.215, lgb2=0.103, cb=0.624`.
+  `lgb0`'s weight is not reliably zero run-to-run (it was `0.000` in the
+  run behind `docs/3_baseline_models.md`), but the ablation confirms its
+  marginal contribution is negligible either way, not just inferred from
+  the ridge weight.
+- Decision: drop `lgb0` from `LGB_CONFIGS` in the next notebook iteration
+  to cut training time and artifact size for a ~0.0007 local RMSE cost.
+  Keep `lgb1`/`lgb2` for now — dropping both only buys ~0.011 more RMSE
+  headroom, not worth it until `lgb1` gets its own isolated ablation row.
+- This run's overall local post-process RMSE (`10.3549`) is better than
+  the `10.410` previously logged in `docs/3_baseline_models.md`, but per
+  the V1-vs-V3/V5 precedent a local improvement alone is not grounds to
+  submit — the per-well public-gap diagnostic (Investigation Priority
+  Primary #1) is still the prerequisite before trusting any new local
+  number against the leaderboard.
+- No submission was made from this run (train mode only); nothing to
+  record in `docs/7_submission_score_registry.md`.
+
+## 8. Execution Checklist (Next Run Cycle)
 
 - Keep one notebook-only controlled change per Kaggle run cycle.
 - In train mode, write candidate settings to notebook variables:
