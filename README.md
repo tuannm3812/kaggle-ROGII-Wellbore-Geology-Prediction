@@ -196,13 +196,15 @@ The highest-value notebook improvement is diagnostic rather than another broad m
    been run against the real attached submission files yet — still the
    top-priority blocker for trusting local validation over the public
    leaderboard.
-2. **LightGBM-variant ablation (done, diagnostic-only).** A 2026-07-28
-   GPU train run confirmed dropping `lgb0` costs only `+0.0007` local
-   tail RMSE (`10.3549 -> 10.3556`); dropping `lgb0`+`lgb1` together costs
-   `+0.0113`. `lgb0` is being removed from `LGB_CONFIGS` next iteration to
-   cut runtime and artifact size. See
+2. **LightGBM-variant ablation (done, diagnostic-only).** `lgb0` has been
+   removed from `LGB_CONFIGS` and verified on Kaggle GPU (2026-07-29):
+   no local RMSE regression and ~28% faster wall-clock (2h16m vs. 3h09m).
+   The remaining 2-model LightGBM stack may itself be dominated by
+   CatBoost (dropping CatBoost still costs the most of any component,
+   `+0.216`) — a follow-up ablation isolating the other LightGBM model
+   is the natural next step. See
    [docs/4_next_steps.md §7](docs/4_next_steps.md#7-run-log) for the full
-   ablation table — no submission was made from this run.
+   ablation tables — no submission was made from either run.
 3. Tune **post-processing** only after the per-well diagnostic identifies
    which public well caused the V3/V5 score drop.
 

@@ -68,7 +68,7 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
 
 1. Explain V1 vs V3/V5 public gap with per-well prediction diff on public rows.
 2. Add failure-mode analysis for monotonicity reversals and tail-start error spikes.
-3. Evaluate lightgbm variant relevance with an ablation matrix using local validation + public sanity checks. Local-validation half done 2026-07-28 (see [Run Log](#7-run-log)); public sanity check still pending (no submission made yet).
+3. Evaluate lightgbm variant relevance with an ablation matrix using local validation + public sanity checks. Local-validation half done 2026-07-28/29 (see [Run Log](#7-run-log)) — `lgb0` dropped from `LGB_CONFIGS` with no local regression and ~28% faster wall-clock; public sanity check still pending (no submission made yet).
 4. Add a stable `beam_pf` artifact audit checklist in runbook checklists.
 
 ## 5. Investigation Priority (Secondary)
@@ -120,6 +120,40 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
   number against the leaderboard.
 - No submission was made from this run (train mode only); nothing to
   record in `docs/7_submission_score_registry.md`.
+
+### 2026-07-29: Verify lgb0 Removal From LGB_CONFIGS (Diagnostic, Not Submitted)
+
+- Kernel: `tuannm3812/rogii-beam-pf-gpu-v2-production`, `CFG.MODE = "train"`,
+  version 3 — first run with `lgb0`'s config actually removed from
+  `LGB_CONFIGS` (only 2 LightGBM configs now, positionally renamed to
+  `lgb0`/`lgb1`; see commit `f8b03a2`).
+- Local ablation result (`beam_pf_ablation_matrix.csv`):
+
+  | component_set | local_tail_rmse | delta vs full |
+  |---|---:|---:|
+  | disable_lgb0 | 10.24099 | -0.0000006 (noise) |
+  | full | 10.24099 | 0.000 |
+  | disable_postprocess | 10.26914 | +0.0282 |
+  | disable_ensemble | 10.31858 | +0.0776 |
+  | disable_lgb0_lgb1 | 10.34358 | +0.1026 |
+  | disable_catboost | 10.45701 | +0.2160 |
+
+- `model_scores.csv`: `lgb0=10.5568, lgb1=10.5287, cb=10.3671, avg=10.3473,
+  ridge=10.2691`. CatBoost remains clearly dominant (dropping it costs
+  `+0.2160`, the largest of any component tested).
+- Wall-clock: ~2h16m (09:36 -> 11:52), vs. ~3h09m for the prior 3-LGB-model
+  run — roughly 28% faster, as expected from training one fewer LightGBM
+  model.
+- This run's local RMSE (`10.2410`) is again lower than the prior run's
+  (`10.3549`), but per the standing caution this is not itself evidence of
+  a public-score improvement — GPU training has run-to-run variance, and
+  local-vs-public correlation is still unverified (Investigation Priority
+  Primary #1). No submission made.
+- Follow-up: `disable_lgb0` (i.e. dropping the current, formerly-lgb1,
+  0.020-learning-rate config too) is *also* within noise of `full`. The
+  two remaining LightGBM models may both be dominated by CatBoost —
+  worth a follow-up ablation isolating `disable_lgb1` alone (not yet
+  tested) before deciding whether to cut LightGBM down further.
 
 ## 8. Execution Checklist (Next Run Cycle)
 
