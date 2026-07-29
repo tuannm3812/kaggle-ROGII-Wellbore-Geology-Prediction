@@ -403,6 +403,29 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
   here; the takeaway is procedural, not causal: changes that move
   `00bbac68`'s long-tail prediction are the ones most likely to move the
   public score, for better or worse.
+- Notable side-finding: all three public test well IDs (`000d7d20`,
+  `00bbac68`, `00e12e8b`) appear identically among the 773 train well
+  IDs too. With 8-hex-char IDs (~4 billion possible values) and only
+  776 total wells, this cannot be random coincidence -- it's how the
+  ID scheme works, not a leakage bug (the actual log/target data
+  presumably still differs between the train and test file for a given
+  ID). Opens a possible sharper proxy: use each exact public well ID's
+  *own* row in the train-side diagnostics, not just "similar-length"
+  wells.
+- Attempted that proxy using `beam_pf_alignment_diag.csv` from the
+  `V11`-producing train run (already had it, no new GPU run needed) --
+  blocked by a second real bug in the same never-before-run
+  "Superpowers Plan" section: `build_alignment_diagnostics` compared the
+  raw residual prediction directly against the absolute true `TVT`
+  without adding `last_known_tvt` back first, so `local_tail_rmse`
+  there is dominated by `TVT`'s own scale (~10,000-12,800) rather than
+  actual error. Fixed in commit `15d9fb5`
+  (`monotonicity_violations`/`slope_changes_*` were unaffected --
+  `last_known_tvt` is constant per well, so a per-well constant offset
+  doesn't change `np.diff`). Getting corrected values needs a fresh GPU
+  train run; not done yet, pending a decision on whether it's worth
+  another ~2h15m cycle given local validation's established
+  unreliability as a predictor of public score on this competition.
 
 ## 8. Execution Checklist (Next Run Cycle)
 
