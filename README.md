@@ -196,17 +196,18 @@ The highest-value notebook improvement is diagnostic rather than another broad m
    been run against the real attached submission files yet — still the
    top-priority blocker for trusting local validation over the public
    leaderboard.
-2. **LightGBM-variant ablation (done, diagnostic-only).** `lgb0` has been
-   removed from `LGB_CONFIGS` and verified on Kaggle GPU (2026-07-29):
-   no local RMSE regression and ~28% faster wall-clock (2h16m vs. 3h09m).
-   A follow-up isolated `disable_lgb1` ablation shows the *current* `lgb0`
-   (`lr=0.020`) is within noise of `full` twice in a row, while `lgb1`
-   (`lr=0.030`) costs a small but real `+0.006`–`+0.011` when dropped.
-   CatBoost's removal cost has grown every run (`0.161 -> 0.216 -> 0.279`)
-   — it is clearly the load-bearing component, now ~72% of the ridge
-   stack. A further drop of the current `lgb0` (leaving one LightGBM
-   model + CatBoost) looks safe but hasn't been made yet — pending a
-   decision before spending another GPU cycle. See
+2. **LightGBM-variant ablation (done, mixed result).** Two configs were
+   pruned from `LGB_CONFIGS` across three GPU runs (2026-07-29). The
+   first two removals were free — each cost was within run-to-run noise
+   (`~0.0000006`, `~0.0004`) — cutting runtime from 3h09m to 2h16m to
+   ~1h13m (~65% total). The third removal (down to a single LightGBM
+   model + CatBoost) was **not** free: its own matched ablation shows
+   `+0.0685` local RMSE cost, clearly above the `+0.006`–`+0.011` the
+   same config cost while a second LightGBM model still shared the load.
+   CatBoost remains clearly dominant throughout (`+0.161 -> +0.216 ->
+   +0.279 -> +0.245` removal cost across the four runs). Open decision:
+   keep the leaner single-LGB setup (trading ~0.07 RMSE for the extra
+   runtime cut) or restore the second model. See
    [docs/4_next_steps.md §7](docs/4_next_steps.md#7-run-log) for the full
    ablation tables — no submission was made from any of these runs.
 3. Tune **post-processing** only after the per-well diagnostic identifies
