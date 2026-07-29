@@ -66,9 +66,9 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
 
 ## 4. Investigation Priority (Primary)
 
-1. Explain the V3/V5/V10 public gap with per-well prediction diff on public rows. Partially blocked 2026-07-29 (see [Run Log](#7-run-log)): only `V5`'s real prediction file was recoverable (`V3`/`V8`/`V9`'s source kernels are gone); a fresh `V10` submission (`10.226`) is available to diff against the recovered `V5` file.
+1. Explain why V11 has the worst local RMSE and best public score of the whole cycle, with a per-well prediction diff on public rows. Partially blocked 2026-07-29 (see [Run Log](#7-run-log)): only `V5`'s and `V11`'s real prediction files are recoverable (`V3`/`V8`/`V9`/`V10`'s source kernels are gone or overwritten).
 2. Add failure-mode analysis for monotonicity reversals and tail-start error spikes.
-3. Evaluate lightgbm variant relevance with an ablation matrix using local validation + public sanity checks. Local-validation half done 2026-07-28/29 (see [Run Log](#7-run-log)) — `lgb0` dropped from `LGB_CONFIGS` with no local regression and ~28% faster wall-clock; public sanity check still pending (no submission made yet).
+3. Evaluate lightgbm variant relevance with an ablation matrix using local validation + public sanity checks. Done 2026-07-28/29 (see [Run Log](#7-run-log)) — pruned to a single LightGBM model (`V10`), which cost real public score; restored a second model (`V11`), which became the new selected best (`10.022`). Local validation never tracked public rank across any of these runs.
 4. Add a stable `beam_pf` artifact audit checklist in runbook checklists.
 
 ## 5. Investigation Priority (Secondary)
@@ -79,7 +79,7 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
 
 ## 6. Completion Criteria
 
-- New V3-beating public score candidate identified and reproduced.
+- New V3-beating public score candidate identified and reproduced. **Done 2026-07-29:** `V11` (`10.022`) beats `V3` (`10.197`) by `0.175`; promoted to selected.
 - Public and local validation mismatch explained and logged by well-level evidence.
 - Documentation updated with exactly one “selected” version and one “diagnostic” run family.
 - No generated Kaggle folders/files are staged in git after each run cycle.
@@ -319,6 +319,47 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
   public score, now that pruning is confirmed to have a real cost, not
   just a local one.
 
+### 2026-07-29: V11 Promotion — New Selected Best (10.022)
+
+- Restored just the `lr=0.020, seed=7` LightGBM config (not `lr=0.025,
+  seed=42`, confirmed free in two separate ablations) to isolate whether
+  reversing the specific removal with a confirmed real cost would
+  recover public score. GPU train run (kernel v6,
+  `tuannm3812/rogii-beam-pf-gpu-v2-production`) rebuilt the artifact
+  bundle with 2 LightGBM models + CatBoost.
+- Local result was the **worst of the entire cycle**:
+  `full = 10.5442` post-ridge, `10.5585` after post-process
+  (`model_scores.csv`: `lgb0=10.806, lgb1=10.798, cb=10.629, avg=10.623`).
+  `disable_lgb0` (dropping the restored model) was `10.5447` — within
+  noise of `full`, consistent with this same config's marginal
+  contribution in earlier ablations. `disable_catboost` cost `+0.185`,
+  again the largest of any component. Every number here is clearly worse
+  than every prior run this cycle, including the single-LightGBM `V10`
+  run (`10.404`).
+- Pushed the submission-replay kernel (`rogii-beam-pf-submission-replay-cpu`
+  v8) and submitted it via `competition_submit_code` (see
+  `docs/6_kaggle_autosubmit_runbook.md` S10).
+- **Result: `V11` = `10.022`.** Beats the previously-selected `V3`
+  (`10.197`) by `0.175` — the first real, non-fabricated improvement
+  found this cycle. Promoted immediately per the registry's Promotion
+  Rule: `V3` demoted to `submitted`, `V11` marked `selected` in
+  `docs/7_submission_score_registry.md`, and the selected-version
+  wording updated in `README.md`, `docs/1_instructions.md`, and
+  `docs/3_baseline_models.md`.
+- **This is the sharpest local-vs-public mismatch of the whole cycle:**
+  `V11` has the worst local RMSE (`10.5585`) and the best public score
+  (`10.022`) of every run today. Ranked by local RMSE (best to worst):
+  `V10 (10.404) < original-3-LGB (10.355) < 2-LGB-verify (10.241,
+  10.296) < V11 (10.559)`. Ranked by public score (best to worst):
+  `V11 (10.022) < V3 (10.197) < V5 (10.212) < V10 (10.226) < V9 (10.299)
+  < V8 (10.305)`. These rankings are close to *inverted* for V11 vs V10.
+  Local validation should not be used to decide what to submit on this
+  competition — every decision that mattered today only resolved by
+  actually submitting.
+- Open question, now higher priority than ever: *why*. The per-well
+  diagnostic (Investigation Priority Primary #1) is the natural next
+  step, using the two real files we do have (`V5`, `V11`).
+
 ## 8. Execution Checklist (Next Run Cycle)
 
 - Keep one notebook-only controlled change per Kaggle run cycle.
@@ -329,6 +370,6 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
   - alignment diagnostics by well (`mean_hidden_tail_length`, `monotonicity_violations`),
   - component ablation table.
 - In submission mode, confirm `validate_replay_metadata(...)` succeeds before interpreting leaderboard output.
-- If leaderboard improves on `10.197` (V3, the verified selected score — see
+- If leaderboard improves on `10.022` (V11, the verified selected score — see
   `docs/7_submission_score_registry.md`), promote immediately and move
   everything else to diagnostic-only status.

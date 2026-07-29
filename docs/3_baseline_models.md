@@ -125,8 +125,8 @@ The alignment model helps most on the longest hidden tails, which is exactly whe
 
 Current model-selection status:
 
-- `V3` remains selected for the leaderboard (`10.197`) — the best *verified* public score on record.
-- `V5`, `V8`, and `V9` are maintained as diagnostic branches (`10.212`, `10.305`, `10.299` respectively).
+- `V11` is selected for the leaderboard (`10.022`) — the best *verified* public score on record, promoted 2026-07-29 (see `docs/7_submission_score_registry.md`).
+- `V3`, `V5`, `V10`, `V9`, and `V8` are maintained as diagnostic/historical branches (`10.197`, `10.212`, `10.226`, `10.299`, `10.305` respectively).
 - A previously documented `V1 = 9.941` entry could not be verified in either Kaggle account's submission history and was removed from the record on 2026-07-29 (see `docs/7_submission_score_registry.md`).
 
 Quick sanity command pattern:
@@ -137,39 +137,32 @@ CFG.MODE = "train"      # local rebuild + diagnostics
 CFG.MODE = "submission" # attached artifact replay + replay checks
 ```
 
-Latest local output:
+Latest local output (V11's 2-LightGBM-model stack, 2026-07-29):
 
 | Component | Local RMSE |
 |---|---:|
-| `lgb0` | 10.786 |
-| `lgb1` | 10.691 |
-| `lgb2` | 10.747 |
-| `catboost` | 10.549 |
-| average ensemble | 10.564 |
-| ridge stack | 10.440 |
-| post-process | 10.410 |
+| `lgb0` (`lr=0.020`) | 10.806 |
+| `lgb1` (`lr=0.030`) | 10.798 |
+| `catboost` | 10.629 |
+| average ensemble | 10.623 |
+| ridge stack / post-process | 10.559 |
 
-Latest ridge weights:
+Ridge weights for this specific run were not captured (the output download hit a connection reset before `ridge_weights.csv` was pulled). Across every other ablation run this cycle, CatBoost carried the majority of the stack weight (`0.60`-`0.72`) and its removal cost the most of any component tested — see `docs/4_next_steps.md` §7 for the full ablation history.
 
-| Model | Weight |
-|---|---:|
-| `lgb0` | 0.000 |
-| `lgb1` | 0.234 |
-| `lgb2` | 0.164 |
-| `catboost` | 0.602 |
-
-CatBoost remains the dominant stack member. The zero weight on `lgb0` suggests future ablations should test whether all three LightGBM variants are still worth the runtime.
+Historical note: earlier versions of this table showed a 3-LightGBM-model stack (`lgb0`/`lgb1`/`lgb2` + CatBoost, weights `0.000`/`0.234`/`0.164`/`0.602`). That stack was pruned down to a single LightGBM model (`V10`), which scored worse publicly, then partially restored to the current 2-model stack (`V11`), which scored best. See the ablation and submission history in `docs/4_next_steps.md` §7 for the full trail.
 
 Public score readout:
 
 | Beam/PF Version | Public Score | Important Change | Interpretation |
 |---|---:|---|---|
-| `V3` | `10.197` | Original public-best Beam/PF production path with full trajectory-stack baseline. | Selected best (verified in Kaggle submission history). |
-| `V5` | `10.212` | Submission-mode replay with V2 artifact bundle and best-iteration preservation. | Worse than V3. |
-| `V8` | `10.305` | Main-account notebook output submission (2026-06-10); discovered unlogged during 2026-07-29 reconciliation. | Worse than V3, diagnostic only. |
-| `V9` | `10.299` | tuannm3823-account GPU train notebook submission (2026-06-10); discovered unlogged during 2026-07-29 reconciliation. | Worse than V3, diagnostic only. |
+| `V11` | `10.022` | Restored a second LightGBM model (`lr=0.020`) alongside CatBoost, undoing the `V10` single-LightGBM prune. | **Selected best (verified).** Local RMSE (`10.5585`) was the worst local score of the cycle, yet this is the best public score. |
+| `V3` | `10.197` | Original public-best Beam/PF production path with full trajectory-stack baseline. | Superseded by V11. |
+| `V5` | `10.212` | Submission-mode replay with V2 artifact bundle and best-iteration preservation. | Worse than V3 and V11. |
+| `V10` | `10.226` | Single-LightGBM (`lr=0.030`) + CatBoost. | Worse than V3, V5, and V11 despite a better local RMSE than V5's. |
+| `V9` | `10.299` | tuannm3823-account GPU train notebook submission (2026-06-10); discovered unlogged during 2026-07-29 reconciliation. | Worse than V3/V5/V11, diagnostic only. |
+| `V8` | `10.305` | Main-account notebook output submission (2026-06-10); discovered unlogged during 2026-07-29 reconciliation. | Worse than V3/V5/V11, diagnostic only. |
 
-The local validation rank has not reliably matched the public score rank across these runs, which is why per-public-well diagnostics remain the next priority. (A previous version of this table included a `V1 = 9.941` row and framed it as the local-vs-public mismatch example; that row could not be verified in either Kaggle account's submission history and was removed 2026-07-29 — see `docs/7_submission_score_registry.md`.)
+The local validation rank has never reliably matched the public score rank across any of these runs — `V11` has the *worst* local RMSE of the set and the *best* public score, the sharpest mismatch observed yet. Per-public-well diagnostics remain the next priority to explain this, though only `V5`'s and `V11`'s actual prediction files are recoverable (`V3`/`V8`/`V9`/`V10`'s source kernels are gone or were overwritten). (A previous version of this table included a `V1 = 9.941` row; that row could not be verified in either Kaggle account's submission history and was removed 2026-07-29 — see `docs/7_submission_score_registry.md`.)
 
 ## 10. Interpretation
 
@@ -177,7 +170,7 @@ The baseline is useful as a stable reference and fallback. The small validation 
 
 The current model-selection position is:
 
-- keep Beam/PF V3 selected because it has the best *verified* public score (`10.197`);
+- keep Beam/PF V11 selected because it has the best *verified* public score (`10.022`);
 - keep the artifact workflow because it improves reproducibility;
-- investigate why later runs (V5/V8/V9) score worse than V3 on the public leaderboard;
+- investigate why local RMSE has never reliably predicted public rank across V3/V5/V8/V9/V10/V11 — V11's worst-local/best-public result is the strongest case yet for not trusting local validation alone;
 - prioritize per-well prediction comparison and Beam/PF component ablations over more feature-tree tuning.

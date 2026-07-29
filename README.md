@@ -6,19 +6,21 @@
 
 The competition asks participants to predict **`TVT` (True Vertical Thickness)** across the hidden interval of each horizontal wellbore. The modeling challenge is not a simple row-wise regression problem: each well has a **long hidden suffix**, a visible **`TVT_input` prefix**, a horizontal **`GR` log**, spatial coordinates, and a paired **typewell reference**.
 
-The strongest *verified* submitted approach in this repository is **Beam + Particle Filter V3**, with public RMSE `10.197`. A previously documented `V1 = 9.941` entry could not be found in either Kaggle account's actual submission history and was removed from the record on 2026-07-29 (see `docs/7_submission_score_registry.md`). Later artifact-workflow reruns scored worse on the public leaderboard, so V3 remains the selected submission.
+The strongest *verified* submitted approach in this repository is **Beam + Particle Filter V11**, with public RMSE `10.022` (promoted 2026-07-29, see `docs/7_submission_score_registry.md`). A previously documented `V1 = 9.941` entry could not be found in either Kaggle account's actual submission history and was removed from the record the same day.
 
 Current selected status:
 
-- `V3` remains selected for leaderboard (`10.197`, best verified public score).
-- `V5`, `V8`, and `V9` are diagnostic branches.
+- `V11` is selected for leaderboard (`10.022`, best verified public score).
+- `V3`, `V5`, `V8`, `V9`, and `V10` are diagnostic/historical branches.
 
 Public score checkpoints:
 
-- V3: `10.197` — best verified public score; original Beam/PF production path with full trajectory-stack.
+- V11: `10.022` — best verified public score; restored a second LightGBM model (`lr=0.020`) alongside CatBoost.
+- V3: `10.197` — original Beam/PF production path with full trajectory-stack; selected until 2026-07-29.
 - V5: `10.212` — reproducible artifact and versioned diagnostic replay path.
-- V8: `10.305` — main-account notebook output submission (2026-06-10), discovered unlogged during reconciliation.
+- V10: `10.226` — single-LightGBM (`lr=0.030`) + CatBoost; the prune V11 later reversed.
 - V9: `10.299` — tuannm3823-account GPU train notebook submission (2026-06-10), discovered unlogged during reconciliation.
+- V8: `10.305` — main-account notebook output submission (2026-06-10), discovered unlogged during reconciliation.
 
 ## 1. Project Overview
 
@@ -160,23 +162,22 @@ Validation and public results show a clear progression from simple baselines to 
 | Carry-forward/simple baseline | `10.281` validation RMSE | `15.883` | Strong fallback, weak geological model. |
 | Feature-tree residual model | `10.084` validation RMSE | `15.491` | Small but consistent improvement. |
 | Typewell alignment | `9.799` validation RMSE | `15.049` | Typewell `GR` matching adds useful signal. |
-| Beam/PF V3 | Original production path | `10.197` | Best verified public submission. |
-| Beam/PF V5 | Artifact replay from V2 | `10.212` | Reproducible but worse than V3. |
-| Beam/PF V8/V9 | Later reruns (2026-06-10) | `10.305` / `10.299` | Discovered unlogged 2026-07-29; both worse than V3. |
-| Beam/PF V10 | Single-LGB + CatBoost (2026-07-29) | `10.226` | Real fresh submission; worse than V3 and V5 despite a slightly better local RMSE than V5's. |
+| Beam/PF V11 | 2-LightGBM + CatBoost, restored (2026-07-29) | `10.022` | **Selected best**, verified. Worst local RMSE of the cycle, best public score. |
+| Beam/PF V3 | Original production path | `10.197` | Superseded by V11. |
+| Beam/PF V5 | Artifact replay from V2 | `10.212` | Worse than V3 and V11. |
+| Beam/PF V10 | Single-LGB + CatBoost (2026-07-29) | `10.226` | The prune V11 reversed; worse than V3, V5, and V11. |
+| Beam/PF V8/V9 | Later reruns (2026-06-10) | `10.305` / `10.299` | Discovered unlogged 2026-07-29; both worse than V3/V5/V11. |
 
-Latest Beam/PF local run:
+Latest Beam/PF local run (V11's 2-LightGBM stack):
 
 | Component | Local RMSE |
 |---|---:|
-| `lgb0` | 10.786 |
-| `lgb1` | 10.691 |
-| `lgb2` | 10.747 |
-| `catboost` | 10.549 |
-| ridge stack | 10.440 |
-| post-process | 10.410 |
+| `lgb0` (`lr=0.020`) | 10.806 |
+| `lgb1` (`lr=0.030`) | 10.798 |
+| `catboost` | 10.629 |
+| ridge stack / post-process | 10.559 |
 
-The local Beam/PF validation improved in later reruns, but the public score dropped versus V3. That mismatch is the current main diagnostic target.
+The local Beam/PF validation has never reliably tracked the public score. `V11` has the *worst* local RMSE of every run this cycle and the *best* public score — the sharpest mismatch observed yet. Explaining it remains the main diagnostic target, though only `V5`'s and `V11`'s prediction files are recoverable (`V3`/`V8`/`V9`/`V10`'s source kernels are gone).
 
 ## 7. Current Lessons
 
@@ -192,29 +193,30 @@ The local Beam/PF validation improved in later reruns, but the public score drop
 
 The highest-value notebook improvement is diagnostic rather than another broad model rewrite:
 
-1. **Per-well diagnostic (partially blocked).** The comparison tooling
-   (`align_predictions`, `compare_versions`, `build_alignment_diagnostics`
-   in notebook 4's "Superpowers Plan" section) exists, but the Kaggle API
-   only exposes a kernel's *current* version output — `V3`, `V8`, and
-   `V9`'s source kernels are gone/overwritten. Only `V5`'s real
-   prediction file was recoverable (from a separate, untouched kernel).
-   A fresh real submission, `V10` (`10.226`), is now available to diff
-   against it. (Previously framed as "V1 vs. V3/V5" — the `V1` record
-   could not be verified in either Kaggle account's submission history
-   and was removed 2026-07-29; see `docs/7_submission_score_registry.md`.)
-2. **LightGBM-variant ablation (done) — the leaner setup costs real
-   public score, not just local.** Two configs were pruned from
-   `LGB_CONFIGS` across three GPU runs (2026-07-29); the first two
-   removals were free locally, the third (down to a single LightGBM
-   model + CatBoost) had a real local cost (`+0.0685`). Submitting that
-   leaner config confirmed it: `V10` (`10.226`) scored worse than `V5`
-   (`10.212`), which used the full 3-LightGBM-model stack — despite
-   `V10`'s local RMSE being *slightly better* than V5's historical local
-   RMSE. Next step: test whether restoring the pruned LightGBM model(s)
-   recovers real public score. See
-   [docs/4_next_steps.md §7](docs/4_next_steps.md#7-run-log) for the full
-   ablation and submission history.
+1. **LightGBM-pruning saga resolved by promotion (2026-07-29).** Three
+   GPU runs pruned `LGB_CONFIGS` from 3 models down to 1; the first two
+   removals were free locally, the third (single LightGBM model +
+   CatBoost) had a real local cost and, once submitted (`V10`, `10.226`),
+   a real public cost too — worse than `V5` (`10.212`), the full-stack
+   run. Restoring just the second-removed model (`V11`, 2 LightGBM
+   models + CatBoost) not only recovered the loss but became the new
+   best verified score: **`10.022`**, beating the old selected `V3`
+   (`10.197`) by `0.175`. See
+   [docs/4_next_steps.md §7](docs/4_next_steps.md#7-run-log) for the
+   full ablation and submission history.
+2. **Per-well diagnostic (partially blocked, still valuable).** The
+   comparison tooling (`align_predictions`, `compare_versions`,
+   `build_alignment_diagnostics` in notebook 4's "Superpowers Plan"
+   section) exists, but the Kaggle API only exposes a kernel's *current*
+   version output — `V3`, `V8`, `V9`, and `V10`'s source kernels are
+   gone/overwritten. Only `V5`'s and `V11`'s real prediction files are
+   recoverable. `V11` has the worst local RMSE and the best public score
+   of the whole cycle — the strongest case yet for explaining *why*
+   local validation doesn't track public rank here. (Previously framed
+   as "V1 vs. V3/V5" — the `V1` record could not be verified in either
+   Kaggle account's submission history and was removed 2026-07-29; see
+   `docs/7_submission_score_registry.md`.)
 3. Tune **post-processing** only after the per-well diagnostic identifies
-   which public well caused the score differences.
+   which public well drives the score differences.
 
-The immediate priority is recovering the public score lost to LightGBM pruning (V10 vs. V5) before pursuing more model complexity.
+The immediate priority is explaining why V11 has the worst local RMSE and the best public score of the cycle, before pursuing more model complexity.
