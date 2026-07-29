@@ -155,6 +155,38 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
   worth a follow-up ablation isolating `disable_lgb1` alone (not yet
   tested) before deciding whether to cut LightGBM down further.
 
+### 2026-07-29: Isolated disable_lgb1 Ablation (Diagnostic, Not Submitted)
+
+- Kernel: `tuannm3812/rogii-beam-pf-gpu-v2-production`, `CFG.MODE = "train"`,
+  version 4 — added a `disable_lgb1` row to `run_component_ablation_matrix()`
+  (commit `3d85e90`) to isolate the second remaining LightGBM config
+  (`lr=0.030, seed=123`) instead of only testing it bundled with `lgb0`.
+- Local ablation result (`beam_pf_ablation_matrix.csv`):
+
+  | component_set | local_tail_rmse | delta vs full |
+  |---|---:|---:|
+  | disable_lgb0 | 10.29551 | -0.0004 (noise) |
+  | full | 10.29591 | 0.000 |
+  | disable_lgb1 | 10.30198 | +0.0061 |
+  | disable_postprocess | 10.31275 | +0.0168 |
+  | disable_lgb0_lgb1 | 10.36247 | +0.0666 |
+  | disable_ensemble | 10.40941 | +0.1135 |
+  | disable_catboost | 10.57516 | +0.2793 |
+
+- Ridge weights this run: `lgb0=0.114, lgb1=0.168, cb=0.718`. CatBoost now
+  carries almost three-quarters of the stack weight.
+- Reading across all three ablation runs to date, the current `lgb0`
+  (`lr=0.020, seed=7`) has been within noise of `full` twice in a row
+  (`-0.0000006` then `-0.0004`), while `lgb1` (`lr=0.030, seed=123`)
+  costs a small but consistently positive `+0.006` to `+0.011` when
+  removed. CatBoost's removal cost has grown each run (`0.161 -> 0.216 ->
+  0.279`) — it is clearly the load-bearing component.
+- Implication: the current `lgb0` looks like a good candidate to drop
+  too, leaving a single LightGBM model (`lgb1`, `lr=0.030`) + CatBoost.
+  Not acted on yet — flagged for a decision before spending another GPU
+  cycle, per one-controlled-change-per-run discipline.
+- No submission was made from this run (train mode only).
+
 ## 8. Execution Checklist (Next Run Cycle)
 
 - Keep one notebook-only controlled change per Kaggle run cycle.
