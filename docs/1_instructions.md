@@ -80,7 +80,7 @@ The latest reruns provide a clear modeling sequence:
 | Baseline | Feature tree improves `10.281 -> 10.084` RMSE | Row-wise features help only slightly. |
 | Typewell alignment | Alignment model improves `10.281 -> 9.799` RMSE | Typewell `GR` matching is a stronger signal. |
 | Beam/PF | Latest run: stack `10.440`, post-process `10.410` | Trajectory reconstruction remains strongest locally. |
-| Beam/PF public | V11 `10.022` (selected), V3 `10.197`, V5 `10.212`, V10 `10.226`, V9 `10.299`, V8 `10.305` | V11 (2026-07-29, restored 2-LightGBM stack) is the new best verified public score, beating V3 by `0.175`. A previously documented `V1 = 9.941` could not be found in either Kaggle account's submission history and was removed 2026-07-29 (see `docs/7_submission_score_registry.md`). |
+| Beam/PF public | V13 `9.952` (selected), V11 `10.022`, V3 `10.197`, V5 `10.212`, V12 `10.087`, V14 `10.126`, V10 `10.226`, V9 `10.299`, V8 `10.305` | V13 (2026-07-29, `tau=None` post-process override) is the new best verified public score, beating V11 by `0.070` via a clean within-run A/B test. A previously documented `V1 = 9.941` could not be found in either Kaggle account's submission history and was removed 2026-07-29 (see `docs/7_submission_score_registry.md`). |
 
 ## 7. Approach 1: EDA
 
@@ -149,18 +149,21 @@ It changes the problem from row-wise residual modeling to full trajectory recons
 - LightGBM/CatBoost blend candidate signals and residual corrections;
 - post-processing smooths the final `TVT` curve.
 
-Result: Beam + Particle Filter V11 reached public score `10.022` (2026-07-29) and is the best *verified* submission on record — it is the selected submission. `V3` (`10.197`) was selected until this promotion. A previously documented `V1 = 9.941` entry could not be found in either Kaggle account's actual submission history (its recorded timestamp was an exact duplicate of V5's) and was removed from the record on 2026-07-29; see `docs/7_submission_score_registry.md` for the correction. Score history:
+Result: Beam + Particle Filter V13 reached public score `9.952` (2026-07-29) and is the best *verified* submission on record — it is the selected submission. A previously documented `V1 = 9.941` entry could not be found in either Kaggle account's actual submission history (its recorded timestamp was an exact duplicate of V5's) and was removed from the record on 2026-07-29; see `docs/7_submission_score_registry.md` for the correction. Score history:
 
 | Version | Public Score | Important Change | Readout |
 |---|---:|---|---|
-| `V11` | `10.022` | Restored a second LightGBM model (`lr=0.020`) alongside CatBoost, undoing an earlier single-LightGBM prune. | **Selected best (verified).** Local RMSE (`10.5585`) was the worst of any run that day, yet this scored best publicly. |
-| `V3` | `10.197` | Original public-best Beam/PF production path with full trajectory-stack baseline. | Superseded by V11; worse than V11 by `0.175`. |
-| `V5` | `10.212` | Added V2 artifact-bundle submission replay with best-iteration model-state preservation. | Worse than V3 and V11. |
-| `V10` | `10.226` | Single-LightGBM (`lr=0.030`) + CatBoost -- the prune V11 later reversed. | Worse than V3, V5, and V11 despite a better local RMSE than V5's. |
-| `V9` | `10.299` | tuannm3823-account GPU train notebook submission (2026-06-10); discovered unlogged during 2026-07-29 reconciliation. | Worse than V3/V5/V11, diagnostic only. |
-| `V8` | `10.305` | Main-account notebook output submission (2026-06-10); discovered unlogged during 2026-07-29 reconciliation. | Worse than V3/V5/V11, diagnostic only. |
+| `V13` | `9.952` | `tau=None` (no post-process distance damping), same model and training pass as `V12`. | **Selected best (verified).** Clean within-run A/B: beats the local grid search's own `tau=100` pick by `0.135` and heavier damping (`V14`, `tau=25`) by `0.174`. |
+| `V11` | `10.022` | Restored a second LightGBM model (`lr=0.020`) alongside CatBoost, undoing an earlier single-LightGBM prune. | Selected best until superseded by `V13` the same day. |
+| `V3` | `10.197` | Original public-best Beam/PF production path with full trajectory-stack baseline. | Superseded by V11, then V13. |
+| `V5` | `10.212` | Added V2 artifact-bundle submission replay with best-iteration model-state preservation. | Worse than V3, V11, V13. |
+| `V10` | `10.226` | Single-LightGBM (`lr=0.030`) + CatBoost -- the prune V11 later reversed. | Worse than V3, V5, V11, V13 despite a better local RMSE than V5's. |
+| `V12` | `10.087` | Same model as V11, fresh training pass, `tau=100` (local grid-search default). | Same-run baseline for the `tau` A/B; `0.065` worse than V11 from pure run-to-run training variance. |
+| `V14` | `10.126` | `tau=25` (heavy damping), same run as V12/V13. | Worse than V12 and V13 -- confirms direction (less damping helps), not just "any change helps". |
+| `V9` | `10.299` | tuannm3823-account GPU train notebook submission (2026-06-10); discovered unlogged during 2026-07-29 reconciliation. | Worse than V3/V5/V11/V13, diagnostic only. |
+| `V8` | `10.305` | Main-account notebook output submission (2026-06-10); discovered unlogged during 2026-07-29 reconciliation. | Worse than V3/V5/V11/V13, diagnostic only. |
 
-The local Beam/PF validation has never reliably tracked the public score across any of these runs -- V11 has the worst local RMSE of the set and the best public score. Diagnostics explaining this mismatch remain valuable, but empirically, local RMSE should not be used to decide what to submit.
+The local Beam/PF validation has never reliably tracked the public score across any of these runs. The `V12`/`V13`/`V14` `tau` sweep makes this concrete: the local grid search picked `tau≈100` as best every time, but a clean same-run A/B shows real submissions clearly prefer `tau=None`. The notebook now hard-codes `tau=None` rather than trusting the local search for this parameter. Diagnostics explaining the broader mismatch remain valuable, but empirically, local RMSE should not be used to decide what to submit.
 
 ## 11. Recommended Next Run
 
@@ -171,13 +174,13 @@ Use the Beam/PF notebook in two modes:
 3. Set `CFG.MODE = "submission"` and rerun to verify artifact replay.
 4. Compare train-mode and submission-mode predictions row by row before submitting.
 
-For model selection, keep V11 selected until a new public submission beats `10.022`.
+For model selection, keep V13 selected until a new public submission beats `9.952`.
 
 ## 12. Next Analysis
 
 The next useful work is targeted deep-dive analysis around Beam/PF:
 
-- V11 versus V3/V5/V10 prediction differences by public well;
+- V13 versus V11/V3/V5/V10 prediction differences by public well;
 - alignment quality by well;
 - `TVT` monotonicity and reversals;
 - spatial dip behavior;

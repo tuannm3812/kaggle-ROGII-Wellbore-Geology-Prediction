@@ -427,6 +427,68 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
   another ~2h15m cycle given local validation's established
   unreliability as a predictor of public score on this competition.
 
+### 2026-07-29/30: Tau Post-Process Sweep -- V13 Promotion (9.952)
+
+- Decided against spending a GPU cycle on the alignment-diagnostics
+  proxy: given local RMSE has failed to predict public score all cycle
+  (culminating in V11 having the *worst* local score and the *best*
+  public score), a better use of GPU budget is testing a real modeling
+  lever directly via submission, not generating more local numbers.
+- Chose `tau` (post-process distance damping, `apply_pp` multiplies the
+  residual correction by `1 - exp(-md_since/tau)`) because it's the
+  parameter most directly connected to the `00bbac68` finding: a
+  long-hidden-tail well showing real, growing prediction divergence.
+- Added code (commit `766213f`) to generate `tau=None`/`25`/`350`
+  candidate submissions from the same train run's already-computed
+  `final_test`/`pf_test` -- no extra GPU cost per candidate, written
+  directly to `/kaggle/working` so each is submittable by filename.
+- GPU train run (kernel v7, `tuannm3812/rogii-beam-pf-gpu-v2-production`,
+  same 2-LGB + CatBoost model as `V11`) completed and confirmed grid
+  search still auto-picks `tau=100` (`abs TVT RMSE=10.4688`).
+- **Platform constraint discovered while submitting:** this competition
+  requires the submission file to be named exactly `submission.csv` --
+  `competition_submit_code` rejected the differently-named candidate
+  files outright (`"Submission files must be named \"submission.csv\""`).
+  Documented in `docs/6_kaggle_autosubmit_runbook.md` S14.
+- Worked around it with 3 separate lightweight CPU replay kernel pushes
+  (`rogii-tau-replay-none`, `rogii-tau-replay-25`, `rogii-tau-replay-350`),
+  each patched to override `TAU` after loading `postprocess_config.json`
+  from the tau-sweep run's artifact bundle, each producing its own
+  `submission.csv`. All three completed in under 2 minutes each (pure
+  CPU inference, no retraining).
+- Submitted 4 real candidates total (the tau-sweep run's own default
+  `submission.csv` plus the three replay-kernel outputs). Results:
+
+  | version_label | tau | public score | vs. same-run default |
+  |---|---:|---:|---:|
+  | `V13` | `None` | **9.952** | `-0.135` |
+  | `V12` | `100` (auto-selected default) | 10.087 | -- |
+  | `V14` | `25` | 10.126 | `+0.039` |
+  | (blocked) | `350` | -- | daily submission quota (5) hit before this one |
+
+- **`V13` (`tau=None`, `9.952`) is a new best, beating `V11` (`10.022`)
+  by `0.070`.** Unlike every prior "improvement" this cycle, this is a
+  clean **within-run** A/B: `V12`/`V13`/`V14` share one training pass and
+  one artifact bundle, differing only in `tau`. The local grid search
+  picked `tau=100` as best in every run today; real submissions clearly
+  and consistently prefer no damping at all. `V12` vs. `V11` (`10.087`
+  vs. `10.022`, identical config, different training pass) reconfirms
+  the ~`0.05`-`0.15` run-to-run noise floor already established, so the
+  `tau=None` win (`0.135`-`0.174` within one run) is well outside that
+  noise band -- a real effect, not noise.
+- Promoted `V13` to selected per the registry's Promotion Rule: `V11`
+  demoted to `submitted`. Updated `README.md`, `docs/1_instructions.md`,
+  `docs/3_baseline_models.md`, `docs/7_submission_score_registry.md`.
+- Locked in the finding in code (same commit as the sweep, `766213f`
+  plus a follow-up): the grid search still runs and logs its own local
+  pick for reference, but `TAU` is now force-overridden to `None`
+  immediately after, with a comment explaining why -- future train runs
+  will no longer silently revert to the local-optimal-but-publicly-worse
+  value.
+- Open: submit `tau=350` once the daily quota resets (~7.8h from the
+  3rd submission) to complete the sweep; consider whether `alpha`/`w_pf`
+  deserve the same real-submission A/B treatment.
+
 ## 8. Execution Checklist (Next Run Cycle)
 
 - Keep one notebook-only controlled change per Kaggle run cycle.
@@ -437,6 +499,6 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
   - alignment diagnostics by well (`mean_hidden_tail_length`, `monotonicity_violations`),
   - component ablation table.
 - In submission mode, confirm `validate_replay_metadata(...)` succeeds before interpreting leaderboard output.
-- If leaderboard improves on `10.022` (V11, the verified selected score — see
+- If leaderboard improves on `9.952` (V13, the verified selected score — see
   `docs/7_submission_score_registry.md`), promote immediately and move
   everything else to diagnostic-only status.

@@ -6,19 +6,22 @@
 
 The competition asks participants to predict **`TVT` (True Vertical Thickness)** across the hidden interval of each horizontal wellbore. The modeling challenge is not a simple row-wise regression problem: each well has a **long hidden suffix**, a visible **`TVT_input` prefix**, a horizontal **`GR` log**, spatial coordinates, and a paired **typewell reference**.
 
-The strongest *verified* submitted approach in this repository is **Beam + Particle Filter V11**, with public RMSE `10.022` (promoted 2026-07-29, see `docs/7_submission_score_registry.md`). A previously documented `V1 = 9.941` entry could not be found in either Kaggle account's actual submission history and was removed from the record the same day.
+The strongest *verified* submitted approach in this repository is **Beam + Particle Filter V13**, with public RMSE `9.952` (promoted 2026-07-29, see `docs/7_submission_score_registry.md`). A previously documented `V1 = 9.941` entry could not be found in either Kaggle account's actual submission history and was removed from the record the same day.
 
 Current selected status:
 
-- `V11` is selected for leaderboard (`10.022`, best verified public score).
-- `V3`, `V5`, `V8`, `V9`, and `V10` are diagnostic/historical branches.
+- `V13` is selected for leaderboard (`9.952`, best verified public score).
+- `V3`, `V5`, `V8`, `V9`, `V10`, `V11`, `V12`, and `V14` are diagnostic/historical branches.
 
 Public score checkpoints:
 
-- V11: `10.022` — best verified public score; restored a second LightGBM model (`lr=0.020`) alongside CatBoost.
+- V13: `9.952` — best verified public score; `tau=None` (no post-process distance damping), same model/training pass as V12.
+- V11: `10.022` — restored a second LightGBM model (`lr=0.020`) alongside CatBoost; selected 2026-07-29 until superseded by V13 the same day.
 - V3: `10.197` — original Beam/PF production path with full trajectory-stack; selected until 2026-07-29.
 - V5: `10.212` — reproducible artifact and versioned diagnostic replay path.
 - V10: `10.226` — single-LightGBM (`lr=0.030`) + CatBoost; the prune V11 later reversed.
+- V12: `10.087` — same model/config as V11, fresh training pass, `tau=100` (local grid-search default).
+- V14: `10.126` — `tau=25` (heavy damping), same run as V12/V13.
 - V9: `10.299` — tuannm3823-account GPU train notebook submission (2026-06-10), discovered unlogged during reconciliation.
 - V8: `10.305` — main-account notebook output submission (2026-06-10), discovered unlogged during reconciliation.
 
@@ -162,22 +165,25 @@ Validation and public results show a clear progression from simple baselines to 
 | Carry-forward/simple baseline | `10.281` validation RMSE | `15.883` | Strong fallback, weak geological model. |
 | Feature-tree residual model | `10.084` validation RMSE | `15.491` | Small but consistent improvement. |
 | Typewell alignment | `9.799` validation RMSE | `15.049` | Typewell `GR` matching adds useful signal. |
-| Beam/PF V11 | 2-LightGBM + CatBoost, restored (2026-07-29) | `10.022` | **Selected best**, verified. Worst local RMSE of the cycle, best public score. |
+| Beam/PF V13 | `tau=None` override, same run as V12 (2026-07-29) | `9.952` | **Selected best**, verified. Clean within-run `tau` A/B win. |
+| Beam/PF V11 | 2-LightGBM + CatBoost, restored (2026-07-29) | `10.022` | Superseded by V13; was selected best until then. |
 | Beam/PF V3 | Original production path | `10.197` | Superseded by V11. |
-| Beam/PF V5 | Artifact replay from V2 | `10.212` | Worse than V3 and V11. |
-| Beam/PF V10 | Single-LGB + CatBoost (2026-07-29) | `10.226` | The prune V11 reversed; worse than V3, V5, and V11. |
-| Beam/PF V8/V9 | Later reruns (2026-06-10) | `10.305` / `10.299` | Discovered unlogged 2026-07-29; both worse than V3/V5/V11. |
+| Beam/PF V5 | Artifact replay from V2 | `10.212` | Worse than V3, V11, V13. |
+| Beam/PF V10 | Single-LGB + CatBoost (2026-07-29) | `10.226` | The prune V11 reversed; worse than V3, V5, V11, V13. |
+| Beam/PF V12 | Same model as V11, fresh pass, `tau=100` (2026-07-29) | `10.087` | Same-run baseline for the `tau` A/B; run-to-run noise vs. V11 (`0.065`). |
+| Beam/PF V14 | `tau=25` (heavy damping), same run as V12/V13 | `10.126` | Worse than V12 and V13 -- less damping is better, not "any change helps". |
+| Beam/PF V8/V9 | Later reruns (2026-06-10) | `10.305` / `10.299` | Discovered unlogged 2026-07-29; worse than V3/V5/V11/V13. |
 
-Latest Beam/PF local run (V11's 2-LightGBM stack):
+Latest Beam/PF local run (same 2-LightGBM stack behind V11-V14):
 
 | Component | Local RMSE |
 |---|---:|
 | `lgb0` (`lr=0.020`) | 10.806 |
 | `lgb1` (`lr=0.030`) | 10.798 |
 | `catboost` | 10.629 |
-| ridge stack / post-process | 10.559 |
+| ridge stack / post-process (`tau=100`, local grid-search pick) | 10.559 |
 
-The local Beam/PF validation has never reliably tracked the public score. `V11` has the *worst* local RMSE of every run this cycle and the *best* public score — the sharpest mismatch observed yet. Explaining it remains the main diagnostic target, though only `V5`'s and `V11`'s prediction files are recoverable (`V3`/`V8`/`V9`/`V10`'s source kernels are gone).
+The local Beam/PF validation has never reliably tracked the public score, and the `V12`/`V13`/`V14` `tau` sweep makes it concrete: the local grid search picks `tau≈100` as best in every run, but a clean same-run A/B shows real submissions clearly prefer `tau=None` (`V13`, `9.952`) over both the grid search's own choice (`V12`, `10.087`) and heavier damping (`V14`, `10.126`). The notebook now hard-codes `tau=None` instead of trusting the local search for this parameter. Explaining *why* remains the main diagnostic target, though only `V5`'s and `V11`'s prediction files are recoverable (`V3`/`V8`/`V9`/`V10`'s source kernels are gone).
 
 ## 7. Current Lessons
 
@@ -219,8 +225,18 @@ The highest-value notebook improvement is diagnostic rather than another broad m
    have access to. See
    [docs/4_next_steps.md §7](docs/4_next_steps.md#7-run-log) for the
    full analysis.
-3. Tune **post-processing** with this in mind: changes that move
-   long-hidden-tail wells' predictions are the ones most likely to move
-   the public score, for better or worse.
+3. **Post-processing `tau` sweep (done, promoted).** Acted on the
+   well-`00bbac68` finding directly: `tau` controls how fast residual
+   correction decays with distance into the hidden tail, so it's the
+   most directly relevant lever for a long-tail well showing growing
+   divergence. A clean within-run A/B (`V12`/`V13`/`V14`, one training
+   pass, only `tau` varied) found `tau=None` (`V13`, `9.952`) clearly
+   beats both the local grid search's own pick (`V12`, `tau=100`,
+   `10.087`) and heavier damping (`V14`, `tau=25`, `10.126`). Promoted
+   `V13` to selected and hard-coded `tau=None` in the notebook instead
+   of trusting the local search for this parameter. `tau=350` (lighter
+   damping still) is queued but blocked by today's submission quota.
+   See [docs/4_next_steps.md §7](docs/4_next_steps.md#7-run-log) for
+   the full sweep.
 
-The immediate priority is using the well-`00bbac68` finding to guide the next modeling change, rather than tuning components that only affect wells the public score barely responds to.
+The immediate priority is testing whether the `tau=None` win generalizes -- submit `tau=350` once quota resets, and consider whether other post-process parameters (`alpha`, `w_pf`) deserve the same real-submission A/B treatment rather than trusting local validation.

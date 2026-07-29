@@ -125,8 +125,8 @@ The alignment model helps most on the longest hidden tails, which is exactly whe
 
 Current model-selection status:
 
-- `V11` is selected for the leaderboard (`10.022`) — the best *verified* public score on record, promoted 2026-07-29 (see `docs/7_submission_score_registry.md`).
-- `V3`, `V5`, `V10`, `V9`, and `V8` are maintained as diagnostic/historical branches (`10.197`, `10.212`, `10.226`, `10.299`, `10.305` respectively).
+- `V13` is selected for the leaderboard (`9.952`) — the best *verified* public score on record, promoted 2026-07-29 (see `docs/7_submission_score_registry.md`).
+- `V11`, `V3`, `V5`, `V10`, `V12`, `V14`, `V9`, and `V8` are maintained as diagnostic/historical branches (`10.022`, `10.197`, `10.212`, `10.226`, `10.087`, `10.126`, `10.299`, `10.305` respectively).
 - A previously documented `V1 = 9.941` entry could not be verified in either Kaggle account's submission history and was removed from the record on 2026-07-29 (see `docs/7_submission_score_registry.md`).
 
 Quick sanity command pattern:
@@ -149,20 +149,23 @@ Latest local output (V11's 2-LightGBM-model stack, 2026-07-29):
 
 Ridge weights for this specific run were not captured (the output download hit a connection reset before `ridge_weights.csv` was pulled). Across every other ablation run this cycle, CatBoost carried the majority of the stack weight (`0.60`-`0.72`) and its removal cost the most of any component tested — see `docs/4_next_steps.md` §7 for the full ablation history.
 
-Historical note: earlier versions of this table showed a 3-LightGBM-model stack (`lgb0`/`lgb1`/`lgb2` + CatBoost, weights `0.000`/`0.234`/`0.164`/`0.602`). That stack was pruned down to a single LightGBM model (`V10`), which scored worse publicly, then partially restored to the current 2-model stack (`V11`), which scored best. See the ablation and submission history in `docs/4_next_steps.md` §7 for the full trail.
+Historical note: earlier versions of this table showed a 3-LightGBM-model stack (`lgb0`/`lgb1`/`lgb2` + CatBoost, weights `0.000`/`0.234`/`0.164`/`0.602`). That stack was pruned down to a single LightGBM model (`V10`), which scored worse publicly, then partially restored to a 2-model stack (`V11`), which scored best at the time -- then superseded by a post-process fix (`V13`, see below) using the exact same model. See the ablation and submission history in `docs/4_next_steps.md` §7 for the full trail.
 
 Public score readout:
 
 | Beam/PF Version | Public Score | Important Change | Interpretation |
 |---|---:|---|---|
-| `V11` | `10.022` | Restored a second LightGBM model (`lr=0.020`) alongside CatBoost, undoing the `V10` single-LightGBM prune. | **Selected best (verified).** Local RMSE (`10.5585`) was the worst local score of the cycle, yet this is the best public score. |
-| `V3` | `10.197` | Original public-best Beam/PF production path with full trajectory-stack baseline. | Superseded by V11. |
-| `V5` | `10.212` | Submission-mode replay with V2 artifact bundle and best-iteration preservation. | Worse than V3 and V11. |
-| `V10` | `10.226` | Single-LightGBM (`lr=0.030`) + CatBoost. | Worse than V3, V5, and V11 despite a better local RMSE than V5's. |
-| `V9` | `10.299` | tuannm3823-account GPU train notebook submission (2026-06-10); discovered unlogged during 2026-07-29 reconciliation. | Worse than V3/V5/V11, diagnostic only. |
-| `V8` | `10.305` | Main-account notebook output submission (2026-06-10); discovered unlogged during 2026-07-29 reconciliation. | Worse than V3/V5/V11, diagnostic only. |
+| `V13` | `9.952` | `tau=None` (no post-process distance damping) override, same model and training pass as `V12`. | **Selected best (verified).** Clean within-run A/B: beats the local grid search's own `tau=100` pick (`V12`) by `0.135` and heavier damping (`V14`, `tau=25`) by `0.174`. |
+| `V11` | `10.022` | Restored a second LightGBM model (`lr=0.020`) alongside CatBoost, undoing the `V10` single-LightGBM prune. | Selected best until superseded by `V13` the same day. |
+| `V3` | `10.197` | Original public-best Beam/PF production path with full trajectory-stack baseline. | Superseded by V11, then V13. |
+| `V5` | `10.212` | Submission-mode replay with V2 artifact bundle and best-iteration preservation. | Worse than V3, V11, V13. |
+| `V10` | `10.226` | Single-LightGBM (`lr=0.030`) + CatBoost. | Worse than V3, V5, V11, V13 despite a better local RMSE than V5's. |
+| `V12` | `10.087` | Same model as V11, fresh training pass, `tau=100` (local grid-search default). | Same-run baseline for the `tau` A/B; `0.065` worse than V11 from pure run-to-run training variance. |
+| `V14` | `10.126` | `tau=25` (heavy damping), same run as V12/V13. | Worse than V12 and V13 -- confirms direction, not just "any change helps". |
+| `V9` | `10.299` | tuannm3823-account GPU train notebook submission (2026-06-10); discovered unlogged during 2026-07-29 reconciliation. | Worse than V3/V5/V11/V13, diagnostic only. |
+| `V8` | `10.305` | Main-account notebook output submission (2026-06-10); discovered unlogged during 2026-07-29 reconciliation. | Worse than V3/V5/V11/V13, diagnostic only. |
 
-The local validation rank has never reliably matched the public score rank across any of these runs — `V11` has the *worst* local RMSE of the set and the *best* public score, the sharpest mismatch observed yet. Per-public-well diagnostics remain the next priority to explain this, though only `V5`'s and `V11`'s actual prediction files are recoverable (`V3`/`V8`/`V9`/`V10`'s source kernels are gone or were overwritten). (A previous version of this table included a `V1 = 9.941` row; that row could not be verified in either Kaggle account's submission history and was removed 2026-07-29 — see `docs/7_submission_score_registry.md`.)
+The local validation rank has never reliably matched the public score rank across any of these runs. The `V12`/`V13`/`V14` `tau` sweep is the sharpest evidence yet: a controlled same-run test shows real submissions clearly prefer `tau=None` over the local grid search's own `tau≈100` choice. Per-public-well diagnostics (`V5` vs. `V11`, the only recoverable pair) explain the *mechanism* -- pooled score is dominated by the longest-hidden-tail public well -- but not why one model's extrapolation there is better. (A previous version of this table included a `V1 = 9.941` row; that row could not be verified in either Kaggle account's submission history and was removed 2026-07-29 — see `docs/7_submission_score_registry.md`.)
 
 ## 10. Interpretation
 
@@ -170,7 +173,7 @@ The baseline is useful as a stable reference and fallback. The small validation 
 
 The current model-selection position is:
 
-- keep Beam/PF V11 selected because it has the best *verified* public score (`10.022`);
+- keep Beam/PF V13 selected because it has the best *verified* public score (`9.952`);
 - keep the artifact workflow because it improves reproducibility;
-- investigate why local RMSE has never reliably predicted public rank across V3/V5/V8/V9/V10/V11 — V11's worst-local/best-public result is the strongest case yet for not trusting local validation alone;
-- prioritize per-well prediction comparison and Beam/PF component ablations over more feature-tree tuning.
+- trust real submissions over local RMSE for any parameter choice on this competition -- the `tau` sweep is direct proof local validation can point the wrong direction;
+- prioritize per-well prediction comparison and further real-submission A/B tests (e.g. `alpha`, `w_pf`) over more feature-tree tuning.

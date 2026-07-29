@@ -335,6 +335,19 @@ rm -rf /tmp/kaggle_output/$RUN_SLUG
       -- the kernel version being submitted had `enable_internet: true`.
       Push a fresh version with `enable_internet: false` and submit
       that version instead.
+    - `"Submission files must be named \"submission.csv\""` -- this
+      competition rejects any other output filename via
+      `competition_submit_code`, even though the kernel can write and
+      keep other named files as regular outputs. To A/B test several
+      candidates (e.g. a post-process parameter sweep), you cannot
+      submit multiple differently-named files from one kernel version
+      -- push a separate kernel version per candidate, each producing
+      its own `submission.csv` (see the 2026-07-29 tau-sweep entry in
+      `docs/4_next_steps.md` S7 for a worked example using several
+      lightweight CPU replay pushes, one per candidate).
+    - `"Your team has used its daily Submission allowance (N) today"`
+      -- resets at UTC midnight; the error message includes the exact
+      wait time. Not retriable until then.
 - Submission stuck at `SubmissionStatus.PENDING`:
   - normal for the first few minutes after submit; poll
     `kaggle competitions submissions` again rather than assuming failure.
