@@ -125,8 +125,9 @@ The alignment model helps most on the longest hidden tails, which is exactly whe
 
 Current model-selection status:
 
-- `V1` remains selected for the leaderboard (`9.941`).
-- `V3` and `V5` are maintained as diagnostic branches (`10.197`, `10.212` respectively).
+- `V3` remains selected for the leaderboard (`10.197`) — the best *verified* public score on record.
+- `V5`, `V8`, and `V9` are maintained as diagnostic branches (`10.212`, `10.305`, `10.299` respectively).
+- A previously documented `V1 = 9.941` entry could not be verified in either Kaggle account's submission history and was removed from the record on 2026-07-29 (see `docs/7_submission_score_registry.md`).
 
 Quick sanity command pattern:
 
@@ -163,11 +164,12 @@ Public score readout:
 
 | Beam/PF Version | Public Score | Important Change | Interpretation |
 |---|---:|---|---|
-| `V1` | `9.941` | Initial public-competitive Beam/PF production path with full stack and no artifact replay dependency. | Selected best. |
-| `V3` | `10.197` | Added reproducible artifact + diagnostic replay path and version log export for easier rerun audit. | Artifact replay from V2; worse than V1. |
-| `V5` | `10.212` | Submission-mode replay with V2 artifact bundle and best-iteration preservation; public score did not beat selected baseline. | Best-iteration artifact workflow; worse than V1. |
+| `V3` | `10.197` | Original public-best Beam/PF production path with full trajectory-stack baseline. | Selected best (verified in Kaggle submission history). |
+| `V5` | `10.212` | Submission-mode replay with V2 artifact bundle and best-iteration preservation. | Worse than V3. |
+| `V8` | `10.305` | Main-account notebook output submission (2026-06-10); discovered unlogged during 2026-07-29 reconciliation. | Worse than V3, diagnostic only. |
+| `V9` | `10.299` | tuannm3823-account GPU train notebook submission (2026-06-10); discovered unlogged during 2026-07-29 reconciliation. | Worse than V3, diagnostic only. |
 
-The local validation rank did not match the public score rank. V5 has better local post-process RMSE than V1, but worse public score. This makes per-public-well diagnostics the next priority.
+The local validation rank has not reliably matched the public score rank across these runs, which is why per-public-well diagnostics remain the next priority. (A previous version of this table included a `V1 = 9.941` row and framed it as the local-vs-public mismatch example; that row could not be verified in either Kaggle account's submission history and was removed 2026-07-29 — see `docs/7_submission_score_registry.md`.)
 
 ## 10. Interpretation
 
@@ -175,7 +177,7 @@ The baseline is useful as a stable reference and fallback. The small validation 
 
 The current model-selection position is:
 
-- keep Beam/PF V1 selected because it has the best public score;
+- keep Beam/PF V3 selected because it has the best *verified* public score (`10.197`);
 - keep the artifact workflow because it improves reproducibility;
-- investigate why V3/V5 local validation looked strong while public score dropped;
+- investigate why later runs (V5/V8/V9) score worse than V3 on the public leaderboard;
 - prioritize per-well prediction comparison and Beam/PF component ablations over more feature-tree tuning.

@@ -66,7 +66,7 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
 
 ## 4. Investigation Priority (Primary)
 
-1. Explain V1 vs V3/V5 public gap with per-well prediction diff on public rows.
+1. Explain V3 vs V5/V8/V9 public gap with per-well prediction diff on public rows.
 2. Add failure-mode analysis for monotonicity reversals and tail-start error spikes.
 3. Evaluate lightgbm variant relevance with an ablation matrix using local validation + public sanity checks. Local-validation half done 2026-07-28/29 (see [Run Log](#7-run-log)) — `lgb0` dropped from `LGB_CONFIGS` with no local regression and ~28% faster wall-clock; public sanity check still pending (no submission made yet).
 4. Add a stable `beam_pf` artifact audit checklist in runbook checklists.
@@ -79,7 +79,7 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
 
 ## 6. Completion Criteria
 
-- New V1-equivalent public score candidate identified and reproduced.
+- New V3-beating public score candidate identified and reproduced.
 - Public and local validation mismatch explained and logged by well-level evidence.
 - Documentation updated with exactly one “selected” version and one “diagnostic” run family.
 - No generated Kaggle folders/files are staged in git after each run cycle.
@@ -114,7 +114,7 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
   headroom, not worth it until `lgb1` gets its own isolated ablation row.
 - This run's overall local post-process RMSE (`10.3549`) is better than
   the `10.410` previously logged in `docs/3_baseline_models.md`, but per
-  the V1-vs-V3/V5 precedent a local improvement alone is not grounds to
+  the V3-vs-V5/V8/V9 precedent a local improvement alone is not grounds to
   submit — the per-well public-gap diagnostic (Investigation Priority
   Primary #1) is still the prerequisite before trusting any new local
   number against the leaderboard.
@@ -228,6 +228,46 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
   changes.
 - No submission was made from this run (train mode only).
 
+### 2026-07-29: Score Record Correction — V1/9.941 Could Not Be Verified
+
+- While preparing the V3-vs-V5/V8/V9 per-well diagnostic, pulled the full
+  submission history for both known Kaggle accounts:
+  - `tuannm3812`: `kaggle competitions submissions -c rogii-wellbore-geology-prediction --csv`
+  - `tuannm3823`: same command via a temporary `KAGGLE_CONFIG_DIR` pointed
+    at `kaggle_tuannm3823.json` (found in the parent `2. Kaggle/` folder).
+- Neither account's history contains a `9.941` submission. The record
+  previously documented as `V1 = 9.941, selected` had a `submission_date_utc`
+  (`2026-05-24T14:05:15.043000Z`) that is an exact, microsecond-for-microsecond
+  duplicate of the real `V5` submission's timestamp (`10.212`) — strong
+  evidence the row was a copy/fabrication error rather than a real,
+  under-documented submission.
+- Two real submissions were found that had never been logged at all:
+  - `V8`: `10.305`, `tuannm3812`, 2026-06-10T15:27:55.557000Z, "Main account
+    notebook output submission 20260610-221607".
+  - `V9`: `10.299`, `tuannm3823`, 2026-06-10T21:47:04.007000Z, "tuannm3823
+    GPU train notebook submission 20260611-0030".
+  - (Two additional `tuannm3823` submissions from 2026-06-10 returned
+    `SubmissionStatus.COMPLETE` with no public score value and are not
+    fileable as registry rows.)
+  - Also noticed one more real, unlogged pre-BeamPF submission —
+    `15.306`, `tuannm3812`, 2026-05-20T12:23:48.673000Z — from the
+    baseline/alignment era. Not added to the registry (which only ever
+    tracked the BeamPF family) and doesn't change the baseline docs'
+    already-correct `15.883 -> 15.491 -> 15.049` progression narrative,
+    but flagged here for completeness.
+- **Corrected selected version: `V3` (`10.197`)** — the actual best
+  verified public score in either account's history. Updated
+  `docs/7_submission_score_registry.md`, `docs/1_instructions.md`,
+  `docs/3_baseline_models.md`, and `README.md` accordingly; the fabricated
+  `V1` row was removed from the registry table (see its Audit Log for the
+  removal record) rather than silently deleted with no trace.
+- Practical implication: the real bar to beat going forward is `10.197`,
+  not `9.941`. Every diagnostic run logged above this entry (all scoring
+  in the `10.24`-`10.40` local range) was already being compared against
+  the wrong, unbeatable target — none of them were ever close to `9.941`,
+  but several may already be worth testing against the real `10.197` bar
+  once the per-well diagnostic restores trust in local validation.
+
 ## 8. Execution Checklist (Next Run Cycle)
 
 - Keep one notebook-only controlled change per Kaggle run cycle.
@@ -238,4 +278,6 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
   - alignment diagnostics by well (`mean_hidden_tail_length`, `monotonicity_violations`),
   - component ablation table.
 - In submission mode, confirm `validate_replay_metadata(...)` succeeds before interpreting leaderboard output.
-- If leaderboard improves 9.941, promote immediately and move everything else to diagnostic-only status.
+- If leaderboard improves on `10.197` (V3, the verified selected score — see
+  `docs/7_submission_score_registry.md`), promote immediately and move
+  everything else to diagnostic-only status.

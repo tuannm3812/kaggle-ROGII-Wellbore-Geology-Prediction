@@ -80,7 +80,7 @@ The latest reruns provide a clear modeling sequence:
 | Baseline | Feature tree improves `10.281 -> 10.084` RMSE | Row-wise features help only slightly. |
 | Typewell alignment | Alignment model improves `10.281 -> 9.799` RMSE | Typewell `GR` matching is a stronger signal. |
 | Beam/PF | Latest run: stack `10.440`, post-process `10.410` | Trajectory reconstruction remains strongest locally. |
-| Beam/PF public | V1 `9.941`, V3 `10.197`, V5 `10.212` | Keep V1 selected; later runs support reproducibility, not a better score. |
+| Beam/PF public | V3 `10.197` (selected), V5 `10.212`, V8 `10.305`, V9 `10.299` | V3 is the best *verified* public score; a previously documented `V1 = 9.941` could not be found in either Kaggle account's submission history and was removed 2026-07-29 (see `docs/7_submission_score_registry.md`). |
 
 ## 7. Approach 1: EDA
 
@@ -149,13 +149,14 @@ It changes the problem from row-wise residual modeling to full trajectory recons
 - LightGBM/CatBoost blend candidate signals and residual corrections;
 - post-processing smooths the final `TVT` curve.
 
-Result: Beam + Particle Filter V1 reached public score `9.941` and remains the selected submission. Later artifact-workflow runs scored worse on the public leaderboard:
+Result: Beam + Particle Filter V3 reached public score `10.197` and is the best *verified* submission on record — it remains the selected submission. A previously documented `V1 = 9.941` entry could not be found in either Kaggle account's actual submission history (its recorded timestamp was an exact duplicate of V5's) and was removed from the record on 2026-07-29; see `docs/7_submission_score_registry.md` for the correction. Later runs scored worse on the public leaderboard:
 
 | Version | Public Score | Important Change | Readout |
 |---|---:|---|---|
-| `V1` | `9.941` | Original public-best Beam/PF production path with full trajectory-stack baseline. | Selected best. |
-| `V3` | `10.197` | Added reproducible artifact path and versioned run logging to harden repeatability. | Submission-mode replay from V2 artifacts. |
-| `V5` | `10.212` | Added V2 artifact-bundle submission replay with best-iteration model-state preservation. | Artifact workflow with LightGBM best-iteration preservation. |
+| `V3` | `10.197` | Original public-best Beam/PF production path with full trajectory-stack baseline. | Selected best (verified). |
+| `V5` | `10.212` | Added V2 artifact-bundle submission replay with best-iteration model-state preservation. | Artifact workflow; worse than V3. |
+| `V8` | `10.305` | Main-account notebook output submission (2026-06-10); discovered unlogged during 2026-07-29 reconciliation. | Worse than V3, diagnostic only. |
+| `V9` | `10.299` | tuannm3823-account GPU train notebook submission (2026-06-10); discovered unlogged during 2026-07-29 reconciliation. | Worse than V3, diagnostic only. |
 
 The score drop means the next work should focus on diagnostics and reproducibility, not a wholesale model rewrite. The local Beam/PF validation improved on later runs, but the public score worsened, which suggests public-well sensitivity or validation mismatch.
 
@@ -168,13 +169,13 @@ Use the Beam/PF notebook in two modes:
 3. Set `CFG.MODE = "submission"` and rerun to verify artifact replay.
 4. Compare train-mode and submission-mode predictions row by row before submitting.
 
-For model selection, keep V1 selected until a new public submission beats `9.941`.
+For model selection, keep V3 selected until a new public submission beats `10.197`.
 
 ## 12. Next Analysis
 
 The next useful work is targeted deep-dive analysis around Beam/PF:
 
-- V1 versus V3/V5 prediction differences by public well;
+- V3 versus V5/V8/V9 prediction differences by public well;
 - alignment quality by well;
 - `TVT` monotonicity and reversals;
 - spatial dip behavior;

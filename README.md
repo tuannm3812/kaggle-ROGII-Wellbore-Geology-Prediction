@@ -6,18 +6,19 @@
 
 The competition asks participants to predict **`TVT` (True Vertical Thickness)** across the hidden interval of each horizontal wellbore. The modeling challenge is not a simple row-wise regression problem: each well has a **long hidden suffix**, a visible **`TVT_input` prefix**, a horizontal **`GR` log**, spatial coordinates, and a paired **typewell reference**.
 
-The strongest submitted approach in this repository is **Beam + Particle Filter V1**, with public RMSE `9.941`. Later artifact-workflow reruns improved reproducibility but scored lower on the public leaderboard, so V1 remains the selected submission.
+The strongest *verified* submitted approach in this repository is **Beam + Particle Filter V3**, with public RMSE `10.197`. A previously documented `V1 = 9.941` entry could not be found in either Kaggle account's actual submission history and was removed from the record on 2026-07-29 (see `docs/7_submission_score_registry.md`). Later artifact-workflow reruns scored worse on the public leaderboard, so V3 remains the selected submission.
 
 Current selected status:
 
-- `V1` remains selected for leaderboard.
-- `V3` and `V5` are diagnostic branches.
+- `V3` remains selected for leaderboard (`10.197`, best verified public score).
+- `V5`, `V8`, and `V9` are diagnostic branches.
 
 Public score checkpoints:
 
-- V1: `9.941` — baseline public-best Beam/PF production path with full trajectory-stack.
-- V3: `10.197` — reproducible artifact and versioned diagnostic replay path.
-- V5: `10.212` — submission replay using V2 artifact bundle and best-iteration preservation.
+- V3: `10.197` — best verified public score; original Beam/PF production path with full trajectory-stack.
+- V5: `10.212` — reproducible artifact and versioned diagnostic replay path.
+- V8: `10.305` — main-account notebook output submission (2026-06-10), discovered unlogged during reconciliation.
+- V9: `10.299` — tuannm3823-account GPU train notebook submission (2026-06-10), discovered unlogged during reconciliation.
 
 ## 1. Project Overview
 
@@ -159,9 +160,9 @@ Validation and public results show a clear progression from simple baselines to 
 | Carry-forward/simple baseline | `10.281` validation RMSE | `15.883` | Strong fallback, weak geological model. |
 | Feature-tree residual model | `10.084` validation RMSE | `15.491` | Small but consistent improvement. |
 | Typewell alignment | `9.799` validation RMSE | `15.049` | Typewell `GR` matching adds useful signal. |
-| Beam/PF V1 | Historical selected run | `9.941` | Best public submission. |
-| Beam/PF V3 | Artifact replay from V2 | `10.197` | Reproducible but worse than V1. |
-| Beam/PF V5 | Best-iteration artifact workflow | `10.212` | Better artifact discipline, still worse than V1. |
+| Beam/PF V3 | Original production path | `10.197` | Best verified public submission. |
+| Beam/PF V5 | Artifact replay from V2 | `10.212` | Reproducible but worse than V3. |
+| Beam/PF V8/V9 | Later reruns (2026-06-10) | `10.305` / `10.299` | Discovered unlogged 2026-07-29; both worse than V3. |
 
 Latest Beam/PF local run:
 
@@ -174,7 +175,7 @@ Latest Beam/PF local run:
 | ridge stack | 10.440 |
 | post-process | 10.410 |
 
-The local Beam/PF validation improved in later reruns, but the public score dropped versus V1. That mismatch is the current main diagnostic target.
+The local Beam/PF validation improved in later reruns, but the public score dropped versus V3. That mismatch is the current main diagnostic target.
 
 ## 7. Current Lessons
 
@@ -190,12 +191,14 @@ The local Beam/PF validation improved in later reruns, but the public score drop
 
 The highest-value notebook improvement is diagnostic rather than another broad model rewrite:
 
-1. **Run the V1 vs. V3/V5 per-well diagnostic.** The comparison tooling
+1. **Run the V3 vs. V5/V8/V9 per-well diagnostic.** The comparison tooling
    (`align_predictions`, `compare_versions`, `build_alignment_diagnostics`
    in notebook 4's "Superpowers Plan" section) already exists but has not
    been run against the real attached submission files yet — still the
    top-priority blocker for trusting local validation over the public
-   leaderboard.
+   leaderboard. (Previously framed as "V1 vs. V3/V5" — the `V1` record
+   could not be verified in either Kaggle account's submission history
+   and was removed 2026-07-29; see `docs/7_submission_score_registry.md`.)
 2. **LightGBM-variant ablation (done, mixed result).** Two configs were
    pruned from `LGB_CONFIGS` across three GPU runs (2026-07-29). The
    first two removals were free — each cost was within run-to-run noise
@@ -213,4 +216,4 @@ The highest-value notebook improvement is diagnostic rather than another broad m
 3. Tune **post-processing** only after the per-well diagnostic identifies
    which public well caused the V3/V5 score drop.
 
-The immediate priority is explaining the V1 versus V3/V5 public-score gap before adding more model complexity.
+The immediate priority is explaining the V3 versus V5/V8/V9 public-score gap before adding more model complexity.
