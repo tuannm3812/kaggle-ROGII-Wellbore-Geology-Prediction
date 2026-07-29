@@ -204,19 +204,23 @@ The highest-value notebook improvement is diagnostic rather than another broad m
    (`10.197`) by `0.175`. See
    [docs/4_next_steps.md §7](docs/4_next_steps.md#7-run-log) for the
    full ablation and submission history.
-2. **Per-well diagnostic (partially blocked, still valuable).** The
-   comparison tooling (`align_predictions`, `compare_versions`,
-   `build_alignment_diagnostics` in notebook 4's "Superpowers Plan"
-   section) exists, but the Kaggle API only exposes a kernel's *current*
-   version output — `V3`, `V8`, `V9`, and `V10`'s source kernels are
-   gone/overwritten. Only `V5`'s and `V11`'s real prediction files are
-   recoverable. `V11` has the worst local RMSE and the best public score
-   of the whole cycle — the strongest case yet for explaining *why*
-   local validation doesn't track public rank here. (Previously framed
-   as "V1 vs. V3/V5" — the `V1` record could not be verified in either
-   Kaggle account's submission history and was removed 2026-07-29; see
-   `docs/7_submission_score_registry.md`.)
-3. Tune **post-processing** only after the per-well diagnostic identifies
-   which public well drives the score differences.
+2. **Per-well diagnostic (done for the recoverable pair).** Compared
+   `V5` vs. `V11`'s real prediction files (`V3`/`V8`/`V9`/`V10`'s source
+   kernels are gone/overwritten, so this is the full extent of what's
+   recoverable). The two versions diverge almost entirely on one public
+   well — `00bbac68`, the longest hidden tail (6,014 rows): RMSE `2.156`
+   between the two versions, a real and *growing* divergence across the
+   tail (`~16%` of that well's own `TVT` range by the end). The other
+   two public wells barely moved (`000d7d20`: RMSE `0.394`, essentially
+   unchanged). This explains the *mechanism* — pooled public RMSE is
+   dominated by whichever well has the longest tail and the largest
+   model-to-model divergence — but not *why* V11 is closer to the true
+   (hidden) value there; that needs ground truth this project doesn't
+   have access to. See
+   [docs/4_next_steps.md §7](docs/4_next_steps.md#7-run-log) for the
+   full analysis.
+3. Tune **post-processing** with this in mind: changes that move
+   long-hidden-tail wells' predictions are the ones most likely to move
+   the public score, for better or worse.
 
-The immediate priority is explaining why V11 has the worst local RMSE and the best public score of the cycle, before pursuing more model complexity.
+The immediate priority is using the well-`00bbac68` finding to guide the next modeling change, rather than tuning components that only affect wells the public score barely responds to.

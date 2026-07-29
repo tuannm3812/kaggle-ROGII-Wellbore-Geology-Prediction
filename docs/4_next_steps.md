@@ -66,7 +66,7 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
 
 ## 4. Investigation Priority (Primary)
 
-1. Explain why V11 has the worst local RMSE and best public score of the whole cycle, with a per-well prediction diff on public rows. Partially blocked 2026-07-29 (see [Run Log](#7-run-log)): only `V5`'s and `V11`'s real prediction files are recoverable (`V3`/`V8`/`V9`/`V10`'s source kernels are gone or overwritten).
+1. Explain why V11 has the worst local RMSE and best public score of the whole cycle, with a per-well prediction diff on public rows. Done 2026-07-29 for the recoverable pair (see [Run Log](#7-run-log)): `V5` vs `V11` diverge almost entirely on the longest-hidden-tail public well (`00bbac68`, RMSE 2.156), while the other two wells barely moved -- explains the *mechanism* (pooled RMSE dominated by whichever well has the longest tail and largest divergence), not yet *why* V11 is closer to ground truth there. `V3`/`V8`/`V9`/`V10`'s source kernels are gone/overwritten, so this pair is the full extent of what's recoverable.
 2. Add failure-mode analysis for monotonicity reversals and tail-start error spikes.
 3. Evaluate lightgbm variant relevance with an ablation matrix using local validation + public sanity checks. Done 2026-07-28/29 (see [Run Log](#7-run-log)) — pruned to a single LightGBM model (`V10`), which cost real public score; restored a second model (`V11`), which became the new selected best (`10.022`). Local validation never tracked public rank across any of these runs.
 4. Add a stable `beam_pf` artifact audit checklist in runbook checklists.
@@ -359,6 +359,50 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
 - Open question, now higher priority than ever: *why*. The per-well
   diagnostic (Investigation Priority Primary #1) is the natural next
   step, using the two real files we do have (`V5`, `V11`).
+
+### 2026-07-29: V5 vs. V11 Per-Well Diagnostic
+
+- Re-pulled both real prediction files: `V5` from the untouched
+  `tuannm3812/rogii-beam-particle-filter` kernel, `V11` from the latest
+  (v8) output of `tuannm3812/rogii-beam-pf-submission-replay-cpu`.
+- Ran `compare_versions`/`per_well_drift_table` (notebook 4's
+  "Superpowers Plan" section) locally against the two files -- these
+  functions are pure pandas/numpy, no Kaggle runtime dependency, so no
+  GPU/kernel cycle was needed. Hit and fixed a real bug in
+  `per_well_drift_table` along the way (commit `df49ee7`): dead code
+  until today, never actually exercised before.
+- Per-well V5-vs-V11 divergence (`delta = pred_V5 - pred_V11`):
+
+  | public_well | rmse | mean_hidden_tail_length | divergence_count (>1.0) | final_row_delta |
+  |---|---:|---:|---:|---:|
+  | `00bbac68` | 2.156 | 6014 | 3501 (58%) | +4.728 |
+  | `00e12e8b` | 0.782 | 4301 | 793 (18%) | -0.938 |
+  | `000d7d20` | 0.394 | 3836 | 13 (0.3%) | -0.472 |
+
+  Overall (pooled across all 14,151 rows): RMSE `1.484`, mean abs delta
+  `1.006`, max abs delta `5.154`.
+- **`00bbac68` (the longest hidden tail of the three) accounts for
+  almost the entire V5-vs-V11 difference.** Its delta trend across the
+  tail (quartile snapshots): `-0.004 -> -1.493 -> 1.186 -> 2.740 ->
+  4.728` -- a real, growing divergence, not noise (its own `TVT` range
+  is only `~29` units, so the final `4.7` gap is `~16%` of that well's
+  range). `000d7d20` stays flat and small (`|delta| < ~0.5` for most of
+  its length) -- V5 and V11 agree almost completely on this well.
+  `00e12e8b` is intermediate, real movement but no clear growing trend.
+- This matches the project's own standing EDA finding (`2_eda_insights.md`):
+  hidden-tail length varies materially by well, and trajectory
+  reconstruction accumulates error over long extrapolation. It also
+  explains the practical mechanism behind today's score swings: pooled
+  RMSE is dominated by whichever public well has the longest tail *and*
+  the largest model-to-model divergence, and that's a different well
+  each time depending on what changed in the model.
+- What this diagnostic can't yet say: *which* prediction (V5's or V11's)
+  is closer to the true hidden `TVT` on `00bbac68` specifically -- only
+  that they disagree substantially there and V11 won overall. Without
+  ground truth for the public test wells, well-level attribution stops
+  here; the takeaway is procedural, not causal: changes that move
+  `00bbac68`'s long-tail prediction are the ones most likely to move the
+  public score, for better or worse.
 
 ## 8. Execution Checklist (Next Run Cycle)
 
