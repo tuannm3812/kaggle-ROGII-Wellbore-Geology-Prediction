@@ -3,7 +3,7 @@
 ## 1) Purpose
 
 This runbook defines the production workflow for running
-[`notebooks/4_rogii_beam_pf.ipynb`](../notebooks/4_rogii_beam_pf.ipynb) on Kaggle with a stable notebook slug and in-notebook submission.
+[`notebooks/4_rogii_beam_pf.ipynb`](../notebooks/4_rogii_beam_pf.ipynb) on Kaggle with a stable notebook slug, then submitting a specific completed kernel version to the competition from outside the kernel.
 
 Use this whenever launching a new version of the Beam + Particle Filter notebook.
 
@@ -19,8 +19,25 @@ retired because it required manual, error-prone syncing with notebook 4.
 
 ## 2) Current Run Policy
 
-- Run in Kaggle notebook mode: `CFG.MODE = "train"` (artifact build) or `CFG.MODE = "submission"` (replay + submit path).
-- Use in-notebook submission (Kaggle submission API endpoint is not used outside the notebook).
+- **This competition rejects internet-enabled notebooks and raw file
+  uploads entirely.** Confirmed 2026-07-29 via the actual Kaggle API
+  error body (`"This competition only accepts Submissions from
+  Notebooks"`, then `"Your Notebook cannot use internet access in this
+  competition"`) -- the CLI/kernel logs only ever show a generic `400
+  Client Error` on their own, so don't stop at that; get the real
+  message (see S13).
+- Consequence: `enable_internet` must stay `false` in
+  `kaggle_kernel/kernel-metadata.json`. The notebook's own in-kernel
+  auto-submit cell (which calls `kaggle competitions submit` from
+  inside the running kernel) **will always fail here** with a DNS
+  resolution error, because it needs network access it isn't allowed to
+  have. That failure is expected and harmless -- do not "fix" it by
+  enabling internet, which would make the kernel version ineligible for
+  submission instead.
+- The actual submission step happens from **outside** the kernel, after
+  a run completes, via `competition_submit_code` (kernel + version
+  reference, not a file upload) -- see S10.
+- Run in Kaggle notebook mode: `CFG.MODE = "train"` (artifact build) or `CFG.MODE = "submission"` (replay path, produces the `submission.csv` that gets submitted afterward).
 - Use `kaggle_kernel/` as the default clean push folder for submission replay updates.
 - Keep `kaggle_runs/` as a local scratch workspace only (not committed to git).
 - Keep notebook logging professional and non-datetime-only.
@@ -190,21 +207,65 @@ tail -n 240 "$OUTPUT_DIR/${RUN_SLUG}.log"
 Key success checks in the log:
 - training mode prints artifact files and `submission.csv` path
 - final section prints version log summary
-- submission cell prints `Submission command invoked successfully from notebook.`
+- the in-kernel submission cell prints a DNS/connection failure and
+  "Notebook submission command failed" -- **this is expected** (S2);
+  it does not mean the run failed, only that the in-kernel submit
+  attempt was correctly blocked from network access.
 
-## 10) Validate Competition Submission
+## 10) Submit The Kernel Version To The Competition
+
+Do this from outside the kernel, after confirming the run completed and
+its `submission.csv` looks right. Use the kernel **version number**
+reported by the push in S8 (or check `kaggle kernels status` /
+the kernel's Kaggle page for the latest version number).
+
+```bash
+/Users/tuannm3812/Library/Python/3.9/bin/kaggle competitions submit \
+  rogii-wellbore-geology-prediction \
+  -k tuannm3812/rogii-beam-pf-submission-replay-cpu \
+  -v <version_number> \
+  -f submission.csv \
+  -m "<version label>: <what changed>; local RMSE <value>"
+```
+
+If this 400s with only a generic `Bad Request` message, get the real
+error via a direct Python call instead of trusting the CLI's swallowed
+error text:
+
+```python
+from kaggle.api.kaggle_api_extended import KaggleApi
+api = KaggleApi()
+api.authenticate()
+try:
+    print(api.competition_submit_code(
+        "submission.csv", "<message>", "rogii-wellbore-geology-prediction",
+        kernel="tuannm3812/rogii-beam-pf-submission-replay-cpu",
+        kernel_version=<version_number>,
+    ))
+except Exception as e:
+    print(e.response.status_code, e.response.text)
+```
+
+This requires the `kagglesdk` package to be installed locally
+(`pip install kagglesdk`) -- without it, the `kaggle` CLI's submit path
+silently falls back to a legacy endpoint that no longer works.
+
+## 11) Validate Competition Submission
 
 ```bash
 /Users/tuannm3812/Library/Python/3.9/bin/kaggle competitions submissions -c rogii-wellbore-geology-prediction
 ```
 
-Confirm latest submission status is `SubmissionStatus.COMPLETE` and compare description message to the run metadata.
+New submissions start as `SubmissionStatus.PENDING` and take a few
+minutes to score -- poll until it flips to `COMPLETE` (or `ERROR`)
+before reading `publicScore`. Compare the description message to the
+run metadata.
 
-## 11) Optional Local Audit
+## 12) Optional Local Audit
 
 For each successful run, capture a lightweight run record:
 - kernel slug
-- version label (e.g., V1/V3/V5)
+- version label (e.g., V3/V5/V10)
 - run timestamp
 - `train` vs `submission` mode
 - local validation best score (if logged)
@@ -213,11 +274,11 @@ For each successful run, capture a lightweight run record:
 - important change summary
 
 If you are delegating to an agent, use this instruction block:
-1. Run `notebooks/4_rogii_beam_pf.ipynb` on Kaggle GPU.
-2. Execute `CFG.MODE = "train"` and collect `version_log.jsonl`.
-3. Execute `CFG.MODE = "submission"` and run in-notebook submit.
+1. Run `notebooks/4_rogii_beam_pf.ipynb` on Kaggle GPU (`CFG.MODE = "train"`) and collect `version_log.jsonl`.
+2. Push the CPU replay kernel (`CFG.MODE = "submission"`, S7-S8) and confirm it completes -- ignore the expected in-kernel submit failure (S2, S9).
+3. Submit that kernel version to the competition from outside the kernel (S10), then poll until scored (S11).
 4. Record the row in [docs/7_submission_score_registry.md](./7_submission_score_registry.md), including:
-   - version label (e.g., V1/V3/V5)
+   - version label (e.g., V3/V5/V10)
    - important change summary
    - whether score improved selected benchmark
 5. If public score improves current selected score, update notebook and immediately rerun submission path on Kaggle.
@@ -230,7 +291,7 @@ Add operational note to:
 
 - [docs/4_next_steps.md](./4_next_steps.md)
 
-## 12) Post-Run Cleanup
+## 13) Post-Run Cleanup
 
 ```bash
 # remove old temporary run folder after you copy the evidence you need
@@ -240,19 +301,45 @@ rm -rf "$RUN_DIR"
 rm -rf /tmp/kaggle_output/$RUN_SLUG
 ```
 
-## 13) Troubleshooting Notes
+## 14) Troubleshooting Notes
 
 - `Kernel slug does not resolve` warning in push output:
   - indicates `id/title` in metadata may not match Kaggle slug normalization.
   - confirm values exactly equal.
-- In-kernel submit missing:
-  - check notebook environment variable `KAGGLE_URL_BASE` is present.
-  - verify `submission.csv` exists before submit cell.
-- Submission missing but log indicates success:
-  - retry output pull and inspect full notebook log tail.
-  - verify competition submission list includes the expected timestamp/description.
+- In-kernel submit fails with a DNS/`NameResolutionError`:
+  - **expected** on this competition (S2) -- `enable_internet` must stay
+    `false`. Do not try to fix this by enabling internet.
+- `kaggle competitions submit` (or `competition_submit_code`) returns a
+  bare `400 Client Error` with no useful detail:
+  - the CLI and the in-kernel call both swallow the actual response
+    body. Get it directly:
+    ```python
+    from kaggle.api.kaggle_api_extended import KaggleApi
+    api = KaggleApi(); api.authenticate()
+    try:
+        api.competition_submit_code(...)
+    except Exception as e:
+        print(e.response.status_code, e.response.text)
+    ```
+  - Errors seen and resolved so far on this competition:
+    - `"BlobFileTokens must be specified"` -- the installed `kaggle`
+      package's submit path silently falls back to a legacy endpoint
+      when the `kagglesdk` package isn't installed. Fix: `pip install
+      kagglesdk`, retry.
+    - `"This competition only accepts Submissions from Notebooks"` --
+      raw file upload (`kaggle competitions submit -f submission.csv`
+      with no `-k`/`-v`) is rejected outright. Use `-k`/`-v` (or
+      `competition_submit_code`) to submit a specific kernel version
+      instead.
+    - `"Your Notebook cannot use internet access in this competition"`
+      -- the kernel version being submitted had `enable_internet: true`.
+      Push a fresh version with `enable_internet: false` and submit
+      that version instead.
+- Submission stuck at `SubmissionStatus.PENDING`:
+  - normal for the first few minutes after submit; poll
+    `kaggle competitions submissions` again rather than assuming failure.
 
-## 14) Commit-Back Discipline for Run Cycles
+## 15) Commit-Back Discipline for Run Cycles
 
 After each run cycle, commit only functionally coherent changes:
 

@@ -54,6 +54,7 @@ Append rows to this table as runs complete.
 | BeamPF | rogii-beam-pf-gpu-v2-production | v2.0 | V5 | submission | 10.212 | 2026-05-24T14:05:15.043000Z | submitted | Submission-mode replay using V2 artifact bundle; score below selected | Submission attempt, worse than V3 |
 | BeamPF | rogii-beam-pf-gpu-v2-production | v2.0 | V8 | submission | 10.305 | 2026-06-10T15:27:55.557000Z | submitted | Main-account notebook output submission; discovered unlogged during 2026-07-29 reconciliation | Worse than V3, diagnostic only |
 | BeamPF (tuannm3823 account) | rogii-beam-pf-gpu-train-submit-20260611-0030 | v2.0 | V9 | submission | 10.299 | 2026-06-10T21:47:04.007000Z | submitted | tuannm3823-account GPU train notebook submission; discovered unlogged during 2026-07-29 reconciliation | Worse than V3, diagnostic only |
+| BeamPF | rogii-beam-pf-submission-replay-cpu | v7 | V10 | submission | 10.226 | 2026-07-29T07:29:24.263000Z | submitted | Single-LightGBM (lr=0.030) + CatBoost stack, submitted via kernel-version code-competition path (`competition_submit_code`, not raw file upload -- this competition rejects internet-enabled notebooks and non-notebook submissions entirely) | Worse than V3 and V5; local RMSE (10.4042) was slightly better than V5's historical local RMSE (10.4101) yet scored worse publicly -- local-vs-public mismatch confirmed on a real, non-fabricated data point |
 
 ## 6. Audit Log (Latest)
 
