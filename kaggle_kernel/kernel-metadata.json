@@ -13,7 +13,7 @@
     "rogii-wellbore-geology-prediction"
   ],
   "kernel_sources": [
-    "tuannm3812/rogii-beam-gpu-v2-073300"
+    "tuannm3812/rogii-beam-pf-gpu-v2-production"
   ],
   "model_sources": [],
   "description": "ROGII Beam + PF submission replay CPU kernel. Runs notebooks/4_rogii_beam_pf.ipynb under a stable slug with CFG.MODE set to submission for artifact replay and submission.csv generation."
