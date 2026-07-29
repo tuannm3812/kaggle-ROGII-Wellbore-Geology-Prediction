@@ -187,6 +187,47 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
   cycle, per one-controlled-change-per-run discipline.
 - No submission was made from this run (train mode only).
 
+### 2026-07-29: Single LightGBM Model + CatBoost (Diagnostic, Not Submitted)
+
+- Kernel: `tuannm3812/rogii-beam-pf-gpu-v2-production`, `CFG.MODE = "train"`,
+  version 5 — dropped the remaining `lr=0.020, seed=7` config from
+  `LGB_CONFIGS`, leaving a single LightGBM model (`lr=0.030, seed=123`)
+  + CatBoost (commit `8e35034`). Also removed the now-meaningless
+  `disable_lgb1` / `disable_lgb0_lgb1` ablation rows (no `lgb1` key
+  exists with only one LightGBM model left).
+- Local ablation result (`beam_pf_ablation_matrix.csv`):
+
+  | component_set | local_tail_rmse | delta vs full |
+  |---|---:|---:|
+  | full | 10.40424 | 0.000 |
+  | disable_postprocess | 10.43037 | +0.0261 |
+  | disable_ensemble | 10.43850 | +0.0343 |
+  | disable_lgb0 | 10.47272 | +0.0685 |
+  | disable_catboost | 10.64968 | +0.2454 |
+
+- Ridge weights: `lgb0=0.338, cb=0.662`.
+- Wall-clock: ~1h13m (14:59 -> 16:12), vs. ~2h16m for the two-LGB-model
+  run — a further ~46% cut (~65% total vs. the original 3-model run).
+- **Different result from the prior two prunings — this one is not free.**
+  With only one LightGBM model left, dropping it costs `+0.0685` in this
+  run's own matched ablation (`disable_lgb0`), clearly larger than the
+  `+0.006` to `+0.011` cost measured for the *same* `lr=0.030` config
+  when a second LightGBM model was still present to share the load. The
+  pattern makes sense: earlier removals cut redundant capacity (near-zero
+  cost); this one cuts the last non-redundant LightGBM signal.
+- This run's overall `full` RMSE (`10.40424`) is also the highest of the
+  four ablation runs so far (prior two-LGB runs: `10.2410`, `10.2959`),
+  though cross-run comparisons are confounded by run-to-run GPU training
+  variance (the two prior same-config runs already differed by `0.055`
+  on their own) and shouldn't be read as precisely as the in-run
+  `disable_lgb0` figure above.
+- **Open decision, not resolved by this run:** keep the single-LGB
+  setup (accept a real, if modest, RMSE cost for a large runtime win),
+  or restore the second LightGBM model given it showed genuine
+  (non-noise) value. Flagged for explicit direction before further
+  changes.
+- No submission was made from this run (train mode only).
+
 ## 8. Execution Checklist (Next Run Cycle)
 
 - Keep one notebook-only controlled change per Kaggle run cycle.
