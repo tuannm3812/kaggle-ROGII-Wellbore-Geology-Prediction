@@ -66,7 +66,7 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
 
 ## 4. Investigation Priority (Primary)
 
-1. Explain V3 vs V5/V8/V9 public gap with per-well prediction diff on public rows.
+1. Explain the V3/V5/V10 public gap with per-well prediction diff on public rows. Partially blocked 2026-07-29 (see [Run Log](#7-run-log)): only `V5`'s real prediction file was recoverable (`V3`/`V8`/`V9`'s source kernels are gone); a fresh `V10` submission (`10.226`) is available to diff against the recovered `V5` file.
 2. Add failure-mode analysis for monotonicity reversals and tail-start error spikes.
 3. Evaluate lightgbm variant relevance with an ablation matrix using local validation + public sanity checks. Local-validation half done 2026-07-28/29 (see [Run Log](#7-run-log)) — `lgb0` dropped from `LGB_CONFIGS` with no local regression and ~28% faster wall-clock; public sanity check still pending (no submission made yet).
 4. Add a stable `beam_pf` artifact audit checklist in runbook checklists.
@@ -267,6 +267,57 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
   the wrong, unbeatable target — none of them were ever close to `9.941`,
   but several may already be worth testing against the real `10.197` bar
   once the per-well diagnostic restores trust in local validation.
+
+### 2026-07-29: Real Submission V10 (10.226) — Single-LGB + CatBoost
+
+- Attempted the planned V3-vs-V5/V8/V9 per-well diagnostic first. Blocked:
+  the Kaggle CLI only pulls a kernel's *current* version's output, and
+  today's ablation runs had already overwritten
+  `tuannm3812/rogii-beam-pf-gpu-v2-production`'s history. Recovered one
+  real historical file — `V5`'s actual `submission.csv` — from a
+  separate, untouched kernel (`tuannm3812/rogii-beam-particle-filter`,
+  last run 2026-05-24, exact same moment as the V5 submission; its
+  printed local RMSE `10.4101` matches what's already documented,
+  confirming it's genuine). `V3`, `V8`, and `V9`'s source kernels are
+  gone (deleted or overwritten) — not recoverable via the API.
+- Given the real spread among genuine submissions (`10.197`-`10.305`)
+  is much narrower than the fabricated-`V1` framing implied — the same
+  order of magnitude as run-to-run GPU noise already measured today —
+  pivoted from "explain the gap" to "get one fresh, real, comparable
+  score" for today's current committed notebook state (single-LGB
+  `lr=0.030` + CatBoost).
+- Getting that submission through surfaced real, previously-undocumented
+  competition constraints (now written up in
+  `docs/6_kaggle_autosubmit_runbook.md` S2/S10/S14):
+  - The in-kernel auto-submit cell can never succeed here — this
+    competition rejects internet-enabled notebooks, and the auto-submit
+    call needs network access.
+  - Raw file upload (`kaggle competitions submit -f submission.csv`) is
+    also rejected outright — this competition only accepts submissions
+    tied to a specific notebook/kernel version
+    (`competition_submit_code`).
+  - The installed `kaggle` pip package silently used a dead legacy
+    endpoint until the `kagglesdk` package was installed alongside it.
+  - All of this only surfaced by calling the API directly in Python and
+    reading the actual JSON error body — the CLI and kernel logs only
+    ever showed a bare `400 Client Error`.
+- **Result: `V10` = `10.226`** (kernel `rogii-beam-pf-submission-replay-cpu`
+  v7). Worse than `V3` (`10.197`) and `V5` (`10.212`) — stays diagnostic,
+  `V3` remains selected. Logged in
+  [docs/7_submission_score_registry.md](./7_submission_score_registry.md).
+- This run's local RMSE (`10.4042`) was *slightly better* than `V5`'s
+  historical local RMSE (`10.4101`), yet scored worse publicly — the
+  local-vs-public mismatch reconfirmed on a real, non-fabricated data
+  point. Today's LightGBM-pruning work (S7, 2026-07-29 entries above)
+  optimized for runtime, not public score; `V5`'s full 3-LGB-model stack
+  beat today's leaner single-LGB stack on the actual leaderboard.
+- Implication for next steps: the per-well diagnostic is no longer
+  fully executable (missing V3/V8/V9 files), so it should be reframed
+  around what *is* available — `V10` vs the recovered real `V5` file —
+  or dropped in favor of testing whether restoring the second/third
+  LightGBM model (reverting some of today's pruning) recovers real
+  public score, now that pruning is confirmed to have a real cost, not
+  just a local one.
 
 ## 8. Execution Checklist (Next Run Cycle)
 

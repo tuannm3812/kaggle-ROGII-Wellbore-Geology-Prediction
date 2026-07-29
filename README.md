@@ -163,6 +163,7 @@ Validation and public results show a clear progression from simple baselines to 
 | Beam/PF V3 | Original production path | `10.197` | Best verified public submission. |
 | Beam/PF V5 | Artifact replay from V2 | `10.212` | Reproducible but worse than V3. |
 | Beam/PF V8/V9 | Later reruns (2026-06-10) | `10.305` / `10.299` | Discovered unlogged 2026-07-29; both worse than V3. |
+| Beam/PF V10 | Single-LGB + CatBoost (2026-07-29) | `10.226` | Real fresh submission; worse than V3 and V5 despite a slightly better local RMSE than V5's. |
 
 Latest Beam/PF local run:
 
@@ -191,29 +192,29 @@ The local Beam/PF validation improved in later reruns, but the public score drop
 
 The highest-value notebook improvement is diagnostic rather than another broad model rewrite:
 
-1. **Run the V3 vs. V5/V8/V9 per-well diagnostic.** The comparison tooling
+1. **Per-well diagnostic (partially blocked).** The comparison tooling
    (`align_predictions`, `compare_versions`, `build_alignment_diagnostics`
-   in notebook 4's "Superpowers Plan" section) already exists but has not
-   been run against the real attached submission files yet — still the
-   top-priority blocker for trusting local validation over the public
-   leaderboard. (Previously framed as "V1 vs. V3/V5" — the `V1` record
+   in notebook 4's "Superpowers Plan" section) exists, but the Kaggle API
+   only exposes a kernel's *current* version output — `V3`, `V8`, and
+   `V9`'s source kernels are gone/overwritten. Only `V5`'s real
+   prediction file was recoverable (from a separate, untouched kernel).
+   A fresh real submission, `V10` (`10.226`), is now available to diff
+   against it. (Previously framed as "V1 vs. V3/V5" — the `V1` record
    could not be verified in either Kaggle account's submission history
    and was removed 2026-07-29; see `docs/7_submission_score_registry.md`.)
-2. **LightGBM-variant ablation (done, mixed result).** Two configs were
-   pruned from `LGB_CONFIGS` across three GPU runs (2026-07-29). The
-   first two removals were free — each cost was within run-to-run noise
-   (`~0.0000006`, `~0.0004`) — cutting runtime from 3h09m to 2h16m to
-   ~1h13m (~65% total). The third removal (down to a single LightGBM
-   model + CatBoost) was **not** free: its own matched ablation shows
-   `+0.0685` local RMSE cost, clearly above the `+0.006`–`+0.011` the
-   same config cost while a second LightGBM model still shared the load.
-   CatBoost remains clearly dominant throughout (`+0.161 -> +0.216 ->
-   +0.279 -> +0.245` removal cost across the four runs). Open decision:
-   keep the leaner single-LGB setup (trading ~0.07 RMSE for the extra
-   runtime cut) or restore the second model. See
+2. **LightGBM-variant ablation (done) — the leaner setup costs real
+   public score, not just local.** Two configs were pruned from
+   `LGB_CONFIGS` across three GPU runs (2026-07-29); the first two
+   removals were free locally, the third (down to a single LightGBM
+   model + CatBoost) had a real local cost (`+0.0685`). Submitting that
+   leaner config confirmed it: `V10` (`10.226`) scored worse than `V5`
+   (`10.212`), which used the full 3-LightGBM-model stack — despite
+   `V10`'s local RMSE being *slightly better* than V5's historical local
+   RMSE. Next step: test whether restoring the pruned LightGBM model(s)
+   recovers real public score. See
    [docs/4_next_steps.md §7](docs/4_next_steps.md#7-run-log) for the full
-   ablation tables — no submission was made from any of these runs.
+   ablation and submission history.
 3. Tune **post-processing** only after the per-well diagnostic identifies
-   which public well caused the V3/V5 score drop.
+   which public well caused the score differences.
 
-The immediate priority is explaining the V3 versus V5/V8/V9 public-score gap before adding more model complexity.
+The immediate priority is recovering the public score lost to LightGBM pruning (V10 vs. V5) before pursuing more model complexity.
