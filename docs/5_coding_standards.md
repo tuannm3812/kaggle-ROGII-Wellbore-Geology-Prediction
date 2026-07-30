@@ -153,7 +153,7 @@ Commit by functional scope, not mixed intent.
 3. Do not mix docs and notebook behavior changes in the same commit unless they are the same closed change.
 4. For run cycles, include a short change summary in the commit body with:
    - what function changed,
-   - which version label was targeted (for example `V1`, `V3`, `V5`),
+   - which version label was targeted (for example `V3`, `V5`, `V13`),
    - expected impact (`selected` / `diagnostic`).
 5. If a commit changes submission workflow or score records, require all of:
    - `6_kaggle_autosubmit_runbook.md` updated if execution steps changed.
@@ -187,13 +187,25 @@ For a competition submission specifically, also confirm before submitting:
 
 ## 11. Kaggle Submission Method
 
-Prefer submitting via Kaggle's **notebook submission** ("Submit to
-Competition" from within the notebook) over uploading a `submission.csv`
-generated elsewhere. Kaggle re-executes the notebook end-to-end, which
-verifies the leaderboard result actually matches the committed code. See the
-shared `coding-standards/coding_standards.md` (§11) in the GitHub root for
-the full rule.
+The general rule from the shared `coding-standards/coding_standards.md`
+(§11) in the GitHub root is to prefer submitting via Kaggle's notebook
+submission over uploading a `submission.csv` generated elsewhere, so the
+leaderboard result stays tied to committed code. **This project is a
+documented exception** (see that shared standard's own escape hatch):
+this competition rejects submissions from internet-enabled notebooks
+outright, so the in-kernel "call the Kaggle API from inside the running
+notebook" pattern can never succeed here -- confirmed 2026-07-29 via the
+actual API error bodies (see `docs/6_kaggle_autosubmit_runbook.md` §2/§14).
 
-Before submitting, confirm the notebook version matches what's recorded in
+The reproducibility guarantee is preserved a different way instead:
+push a kernel version with `enable_internet: false`, let it complete,
+then submit that specific completed version from **outside** the kernel
+via `kaggle competitions submit -k <owner>/<kernel> -v <version>` (or
+`competition_submit_code`). The score is still tied to an immutable,
+already-executed kernel version, not a hand-edited file -- just invoked
+one step removed from the notebook itself. Full command reference and
+troubleshooting: `docs/6_kaggle_autosubmit_runbook.md` §10/§14.
+
+Before submitting, confirm the kernel version matches what's recorded in
 this project's results doc, and log the submission (version, score, date)
-after it completes.
+in `docs/7_submission_score_registry.md` after it completes.

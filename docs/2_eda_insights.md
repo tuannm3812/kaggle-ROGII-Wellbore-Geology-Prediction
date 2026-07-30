@@ -113,7 +113,7 @@ Yes, but it should be targeted rather than broad.
 
 Recommended deep dives:
 
-1. **Public-well sensitivity**: compare Beam/PF V1, V3, and V5 curves by public well to isolate which well caused the public-score drop.
+1. **Public-well sensitivity**: compare Beam/PF submission curves by public well to isolate which well drives score changes between versions. Done 2026-07-29 for the one recoverable real pair (V5 vs. V11, see `docs/8_run_log.md`): the longest-hidden-tail public well (`00bbac68`) dominated the difference, the other two barely moved.
 2. **Alignment quality by well**: score known-prefix horizontal `GR` against typewell `GR` and identify wells where typewell alignment is weak.
 3. **Trajectory monotonicity and reversals**: quantify where true training `TVT` increases, decreases, or stays flat after Prediction Start.
 4. **Spatial dip behavior**: estimate local formation dip from neighboring wells and compare it with Beam/PF formation-plane features.
