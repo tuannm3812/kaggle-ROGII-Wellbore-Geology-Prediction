@@ -126,7 +126,7 @@ The alignment model helps most on the longest hidden tails, which is exactly whe
 Current model-selection status:
 
 - `V13` is selected for the leaderboard (`9.952`) — the best *verified* public score on record, promoted 2026-07-29 (see `docs/7_submission_score_registry.md`).
-- `V11`, `V3`, `V5`, `V10`, `V12`, `V14`, `V9`, and `V8` are maintained as diagnostic/historical branches (`10.022`, `10.197`, `10.212`, `10.226`, `10.087`, `10.126`, `10.299`, `10.305` respectively).
+- `V11`, `V3`, `V5`, `V10`, `V12`, `V14`, `V15`, `V9`, and `V8` are maintained as diagnostic/historical branches (`10.022`, `10.197`, `10.212`, `10.226`, `10.087`, `10.126`, `10.242`, `10.299`, `10.305` respectively).
 - A previously documented `V1 = 9.941` entry could not be verified in either Kaggle account's submission history and was removed from the record on 2026-07-29 (see `docs/7_submission_score_registry.md`).
 
 Quick sanity command pattern:
@@ -162,10 +162,11 @@ Public score readout:
 | `V10` | `10.226` | Single-LightGBM (`lr=0.030`) + CatBoost. | Worse than V3, V5, V11, V13 despite a better local RMSE than V5's. |
 | `V12` | `10.087` | Same model as V11, fresh training pass, `tau=100` (local grid-search default). | Same-run baseline for the `tau` A/B; `0.065` worse than V11 from pure run-to-run training variance. |
 | `V14` | `10.126` | `tau=25` (heavy damping), same run as V12/V13. | Worse than V12 and V13 -- confirms direction, not just "any change helps". |
+| `V15` | `10.242` | `tau=350` (light damping), same run as V12/V13/V14; completes the 4-point sweep after a daily quota block. | Worst of the entire sweep. |
 | `V9` | `10.299` | tuannm3823-account GPU train notebook submission (2026-06-10); discovered unlogged during 2026-07-29 reconciliation. | Worse than V3/V5/V11/V13, diagnostic only. |
 | `V8` | `10.305` | Main-account notebook output submission (2026-06-10); discovered unlogged during 2026-07-29 reconciliation. | Worse than V3/V5/V11/V13, diagnostic only. |
 
-The local validation rank has never reliably matched the public score rank across any of these runs. The `V12`/`V13`/`V14` `tau` sweep is the sharpest evidence yet: a controlled same-run test shows real submissions clearly prefer `tau=None` over the local grid search's own `tau≈100` choice. Per-public-well diagnostics (`V5` vs. `V11`, the only recoverable pair) explain the *mechanism* -- pooled score is dominated by the longest-hidden-tail public well -- but not why one model's extrapolation there is better. (A previous version of this table included a `V1 = 9.941` row; that row could not be verified in either Kaggle account's submission history and was removed 2026-07-29 — see `docs/7_submission_score_registry.md`.)
+The local validation rank has never reliably matched the public score rank across any of these runs. The `V12`/`V13`/`V14`/`V15` `tau` sweep is the sharpest evidence yet: a controlled same-run test shows real submissions clearly prefer `tau=None` over the local grid search's own `tau≈100` choice (ranking by tau: `None(9.952) < 100(10.087) < 25(10.126) < 350(10.242)`, not perfectly monotonic but the extremes are unambiguous). Per-public-well diagnostics (`V5` vs. `V11`, the only recoverable pair) explain the *mechanism* -- pooled score is dominated by the longest-hidden-tail public well -- but not why one model's extrapolation there is better. (A previous version of this table included a `V1 = 9.941` row; that row could not be verified in either Kaggle account's submission history and was removed 2026-07-29 — see `docs/7_submission_score_registry.md`.)
 
 ## 10. Interpretation
 

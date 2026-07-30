@@ -225,18 +225,26 @@ The highest-value notebook improvement is diagnostic rather than another broad m
    have access to. See
    [docs/4_next_steps.md §7](docs/4_next_steps.md#7-run-log) for the
    full analysis.
-3. **Post-processing `tau` sweep (done, promoted).** Acted on the
-   well-`00bbac68` finding directly: `tau` controls how fast residual
-   correction decays with distance into the hidden tail, so it's the
-   most directly relevant lever for a long-tail well showing growing
-   divergence. A clean within-run A/B (`V12`/`V13`/`V14`, one training
-   pass, only `tau` varied) found `tau=None` (`V13`, `9.952`) clearly
-   beats both the local grid search's own pick (`V12`, `tau=100`,
-   `10.087`) and heavier damping (`V14`, `tau=25`, `10.126`). Promoted
-   `V13` to selected and hard-coded `tau=None` in the notebook instead
-   of trusting the local search for this parameter. `tau=350` (lighter
-   damping still) is queued but blocked by today's submission quota.
-   See [docs/4_next_steps.md §7](docs/4_next_steps.md#7-run-log) for
-   the full sweep.
+3. **Post-processing `tau` sweep (done, promoted, closed out).** Acted
+   on the well-`00bbac68` finding directly: `tau` controls how fast
+   residual correction decays with distance into the hidden tail, so
+   it's the most directly relevant lever for a long-tail well showing
+   growing divergence. A clean within-run A/B (`V12`/`V13`/`V14`/`V15`,
+   one training pass, only `tau` varied) tested the full range:
 
-The immediate priority is testing whether the `tau=None` win generalizes -- submit `tau=350` once quota resets, and consider whether other post-process parameters (`alpha`, `w_pf`) deserve the same real-submission A/B treatment rather than trusting local validation.
+   | tau | version | public score |
+   |---:|---|---:|
+   | `None` | `V13` | **9.952** (selected) |
+   | `100` | `V12` | 10.087 |
+   | `25` | `V14` | 10.126 |
+   | `350` | `V15` | 10.242 |
+
+   Not perfectly monotonic (`25`/`100` swap order, likely noise from
+   only 3 public wells), but the extremes are unambiguous: no damping
+   is best, heaviest damping is worst. Promoted `V13` and hard-coded
+   `tau=None` in the notebook instead of trusting the local grid
+   search's `tau≈100` pick. See
+   [docs/4_next_steps.md §7](docs/4_next_steps.md#7-run-log) for the
+   full sweep.
+
+The immediate priority is deciding whether other post-process parameters (`alpha`, `w_pf`) deserve the same real-submission A/B treatment as `tau` did, using the same one-training-pass, multiple-lightweight-CPU-replay pattern.

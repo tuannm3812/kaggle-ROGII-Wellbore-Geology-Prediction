@@ -80,7 +80,7 @@ The latest reruns provide a clear modeling sequence:
 | Baseline | Feature tree improves `10.281 -> 10.084` RMSE | Row-wise features help only slightly. |
 | Typewell alignment | Alignment model improves `10.281 -> 9.799` RMSE | Typewell `GR` matching is a stronger signal. |
 | Beam/PF | Latest run: stack `10.440`, post-process `10.410` | Trajectory reconstruction remains strongest locally. |
-| Beam/PF public | V13 `9.952` (selected), V11 `10.022`, V3 `10.197`, V5 `10.212`, V12 `10.087`, V14 `10.126`, V10 `10.226`, V9 `10.299`, V8 `10.305` | V13 (2026-07-29, `tau=None` post-process override) is the new best verified public score, beating V11 by `0.070` via a clean within-run A/B test. A previously documented `V1 = 9.941` could not be found in either Kaggle account's submission history and was removed 2026-07-29 (see `docs/7_submission_score_registry.md`). |
+| Beam/PF public | V13 `9.952` (selected), V11 `10.022`, V3 `10.197`, V5 `10.212`, V12 `10.087`, V14 `10.126`, V10 `10.226`, V15 `10.242`, V9 `10.299`, V8 `10.305` | V13 (2026-07-29, `tau=None` post-process override) is the new best verified public score, beating V11 by `0.070` via a clean within-run A/B test. A previously documented `V1 = 9.941` could not be found in either Kaggle account's submission history and was removed 2026-07-29 (see `docs/7_submission_score_registry.md`). |
 
 ## 7. Approach 1: EDA
 
@@ -160,10 +160,11 @@ Result: Beam + Particle Filter V13 reached public score `9.952` (2026-07-29) and
 | `V10` | `10.226` | Single-LightGBM (`lr=0.030`) + CatBoost -- the prune V11 later reversed. | Worse than V3, V5, V11, V13 despite a better local RMSE than V5's. |
 | `V12` | `10.087` | Same model as V11, fresh training pass, `tau=100` (local grid-search default). | Same-run baseline for the `tau` A/B; `0.065` worse than V11 from pure run-to-run training variance. |
 | `V14` | `10.126` | `tau=25` (heavy damping), same run as V12/V13. | Worse than V12 and V13 -- confirms direction (less damping helps), not just "any change helps". |
+| `V15` | `10.242` | `tau=350` (light damping), same run as V12/V13/V14; completes the 4-point sweep after a daily quota block. | Worst of the entire sweep. |
 | `V9` | `10.299` | tuannm3823-account GPU train notebook submission (2026-06-10); discovered unlogged during 2026-07-29 reconciliation. | Worse than V3/V5/V11/V13, diagnostic only. |
 | `V8` | `10.305` | Main-account notebook output submission (2026-06-10); discovered unlogged during 2026-07-29 reconciliation. | Worse than V3/V5/V11/V13, diagnostic only. |
 
-The local Beam/PF validation has never reliably tracked the public score across any of these runs. The `V12`/`V13`/`V14` `tau` sweep makes this concrete: the local grid search picked `tau≈100` as best every time, but a clean same-run A/B shows real submissions clearly prefer `tau=None`. The notebook now hard-codes `tau=None` rather than trusting the local search for this parameter. Diagnostics explaining the broader mismatch remain valuable, but empirically, local RMSE should not be used to decide what to submit.
+The local Beam/PF validation has never reliably tracked the public score across any of these runs. The `V12`/`V13`/`V14`/`V15` `tau` sweep makes this concrete: the local grid search picked `tau≈100` as best every time, but a clean same-run A/B shows real submissions clearly prefer `tau=None` (ranking by tau: `None(9.952) < 100(10.087) < 25(10.126) < 350(10.242)`, not perfectly monotonic but the extremes are unambiguous). The notebook now hard-codes `tau=None` rather than trusting the local search for this parameter. Diagnostics explaining the broader mismatch remain valuable, but empirically, local RMSE should not be used to decide what to submit.
 
 ## 11. Recommended Next Run
 

@@ -485,9 +485,26 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
   immediately after, with a comment explaining why -- future train runs
   will no longer silently revert to the local-optimal-but-publicly-worse
   value.
-- Open: submit `tau=350` once the daily quota resets (~7.8h from the
-  3rd submission) to complete the sweep; consider whether `alpha`/`w_pf`
-  deserve the same real-submission A/B treatment.
+- **2026-07-30 follow-up: `tau=350` submitted once quota reset.**
+  Result: `V15` = `10.242` (kernel `rogii-tau-replay-350` v1, already
+  built the day before, just needed a fresh submission). Worst of the
+  entire sweep. Full ranking by tau value:
+
+  | tau | version_label | public score |
+  |---:|---|---:|
+  | `None` | `V13` | **9.952** (selected) |
+  | `100` | `V12` | 10.087 |
+  | `25` | `V14` | 10.126 |
+  | `350` | `V15` | 10.242 |
+
+  Not perfectly monotonic (`25` and `100` swap order relative to their
+  raw tau values, likely noise given only 3 public wells drive the
+  score), but the extremes are unambiguous: no damping is clearly best,
+  the heaviest damping is clearly worst. Sweep closed out; `V13`
+  remains selected with no further tau candidates to test.
+- Open: consider whether `alpha`/`w_pf` deserve the same real-submission
+  A/B treatment as `tau` did, using the same one-training-pass,
+  multiple-lightweight-CPU-replay pattern established here.
 
 ## 8. Execution Checklist (Next Run Cycle)
 
