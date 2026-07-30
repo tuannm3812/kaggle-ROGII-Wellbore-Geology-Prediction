@@ -287,9 +287,13 @@ Append the run row to:
 
 - [docs/7_submission_score_registry.md](./7_submission_score_registry.md)
 
-Add operational note to:
+Add a detailed operational note to:
 
-- [docs/4_next_steps.md](./4_next_steps.md)
+- [docs/8_run_log.md](./8_run_log.md)
+
+Update [docs/4_next_steps.md](./4_next_steps.md) only if the run changes
+current priorities (it links to `8_run_log.md` rather than containing
+run-by-run detail).
 
 ## 13) Post-Run Cleanup
 
@@ -343,7 +347,7 @@ rm -rf /tmp/kaggle_output/$RUN_SLUG
       submit multiple differently-named files from one kernel version
       -- push a separate kernel version per candidate, each producing
       its own `submission.csv` (see the 2026-07-29 tau-sweep entry in
-      `docs/4_next_steps.md` S7 for a worked example using several
+      `docs/8_run_log.md` for a worked example using several
       lightweight CPU replay pushes, one per candidate).
     - `"Your team has used its daily Submission allowance (N) today"`
       -- resets at UTC midnight; the error message includes the exact
@@ -361,6 +365,7 @@ After each run cycle, commit only functionally coherent changes:
 - For any submission-related change, include all impacted files in the same functional commit group:
   - `docs/6_kaggle_autosubmit_runbook.md` (execution changes),
   - `docs/7_submission_score_registry.md` (scores/history),
-  - `docs/4_next_steps.md` (priority updates),
+  - `docs/8_run_log.md` (detailed run notes),
+  - `docs/4_next_steps.md` (only if priorities changed),
   - root `README.md` (if public status text changes),
   - `docs/1_instructions.md` or `docs/3_baseline_models.md` (if interpretation wording changes).

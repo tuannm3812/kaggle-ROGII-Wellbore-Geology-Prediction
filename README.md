@@ -62,7 +62,8 @@ The key modeling lesson is that full **`TVT` trajectory reconstruction** is much
 │   ├── 4_next_steps.md
 │   ├── 5_coding_standards.md
 │   ├── 6_kaggle_autosubmit_runbook.md
-│   └── 7_submission_score_registry.md
+│   ├── 7_submission_score_registry.md
+│   └── 8_run_log.md
 ├── kaggle_kernel/
 │   ├── 4_rogii_beam_pf.ipynb
 │   └── kernel-metadata.json
@@ -83,6 +84,7 @@ Detailed notes:
 - `docs/5_coding_standards.md`: notebook and documentation standards for this project.
 - `docs/6_kaggle_autosubmit_runbook.md`: Kaggle GPU submission workflow.
 - `docs/7_submission_score_registry.md`: versioned submission score history and promotion policy.
+- `docs/8_run_log.md`: detailed chronological run-by-run history (diagnostics, ablations, promotions, bugs fixed).
 
 ## 4. Notebook Flow
 
@@ -208,7 +210,7 @@ The highest-value notebook improvement is diagnostic rather than another broad m
    models + CatBoost) not only recovered the loss but became the new
    best verified score: **`10.022`**, beating the old selected `V3`
    (`10.197`) by `0.175`. See
-   [docs/4_next_steps.md §7](docs/4_next_steps.md#7-run-log) for the
+   [docs/8_run_log.md](docs/8_run_log.md) for the
    full ablation and submission history.
 2. **Per-well diagnostic (done for the recoverable pair).** Compared
    `V5` vs. `V11`'s real prediction files (`V3`/`V8`/`V9`/`V10`'s source
@@ -223,7 +225,7 @@ The highest-value notebook improvement is diagnostic rather than another broad m
    model-to-model divergence — but not *why* V11 is closer to the true
    (hidden) value there; that needs ground truth this project doesn't
    have access to. See
-   [docs/4_next_steps.md §7](docs/4_next_steps.md#7-run-log) for the
+   [docs/8_run_log.md](docs/8_run_log.md) for the
    full analysis.
 3. **Post-processing `tau` sweep (done, promoted, closed out).** Acted
    on the well-`00bbac68` finding directly: `tau` controls how fast
@@ -244,7 +246,7 @@ The highest-value notebook improvement is diagnostic rather than another broad m
    is best, heaviest damping is worst. Promoted `V13` and hard-coded
    `tau=None` in the notebook instead of trusting the local grid
    search's `tau≈100` pick. See
-   [docs/4_next_steps.md §7](docs/4_next_steps.md#7-run-log) for the
+   [docs/8_run_log.md](docs/8_run_log.md) for the
    full sweep.
 4. **`alpha`/`w_pf` sweep (done, no improvement -- post-process tuning
    looks exhausted).** Same real-submission A/B method applied to the
