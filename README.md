@@ -246,5 +246,15 @@ The highest-value notebook improvement is diagnostic rather than another broad m
    search's `tau≈100` pick. See
    [docs/4_next_steps.md §7](docs/4_next_steps.md#7-run-log) for the
    full sweep.
+4. **`alpha`/`w_pf` sweep (done, no improvement -- post-process tuning
+   looks exhausted).** Same real-submission A/B method applied to the
+   other two post-process parameters, perturbing `V13`'s config one at
+   a time (`V16`: `w_pf=0.0`, `10.284`; `V17`: `w_pf=0.15`, `10.088`;
+   `V18`: `alpha=1.15`, `10.474`, the worst result of the entire
+   combined sweep; `V19`: `alpha=0.85`, `10.227`). All four scored worse
+   than `V13`. Unlike `tau`, the local grid search's picks for `alpha`
+   (`1.0`) and `w_pf` (`0.05`) hold up under real testing -- `V13` is a
+   genuine local optimum across all three post-process parameters now
+   validated. No promotion.
 
-The immediate priority is deciding whether other post-process parameters (`alpha`, `w_pf`) deserve the same real-submission A/B treatment as `tau` did, using the same one-training-pass, multiple-lightweight-CPU-replay pattern.
+The immediate priority is shifting back to model structure (LightGBM/CatBoost composition, feature engineering) or the per-well diagnostic, since post-process tuning on the current model has been thoroughly tested against real submissions and found to be at a local optimum.

@@ -506,6 +506,41 @@ Reference the full standard in [5_coding_standards.md](./5_coding_standards.md).
   A/B treatment as `tau` did, using the same one-training-pass,
   multiple-lightweight-CPU-replay pattern established here.
 
+### 2026-07-30: Alpha/W_PF Post-Process Sweep -- No Improvement Found
+
+- Applied the same real-submission A/B methodology to `alpha` (residual
+  shrinkage) and `w_pf` (particle-filter blend weight), perturbing
+  `V13`'s exact config (`alpha=1.0, w_pf=0.05, tau=None`) one parameter
+  at a time. No new GPU run needed -- reused `V12`'s artifact bundle
+  (still the latest output of `rogii-beam-pf-gpu-v2-production`) via 4
+  more lightweight CPU replay kernels, each overriding `TAU=None` (to
+  match V13's actual winning baseline, since that run's own saved config
+  still had `tau=100` baked in from before the override was added) plus
+  one of `alpha`/`w_pf`.
+- Results, all worse than `V13` (`9.952`):
+
+  | version_label | change | public score | vs. V13 |
+  |---|---|---:|---:|
+  | `V16` | `w_pf=0.0` | 10.284 | `+0.332` |
+  | `V17` | `w_pf=0.15` | 10.088 | `+0.136` |
+  | `V18` | `alpha=1.15` | 10.474 | `+0.522` (worst of the entire tau+pp sweep) |
+  | `V19` | `alpha=0.85` | 10.227 | `+0.275` |
+
+- **Unlike `tau`, the local grid search's picks for `alpha` (`1.0`) and
+  `w_pf` (`0.05`) hold up under real-submission testing** -- every
+  perturbation in both directions on both parameters made the public
+  score worse. `V13`'s exact configuration is a genuine local optimum
+  across all three post-process parameters now tested, not just an
+  artifact of `tau` being the one dimension local validation got wrong.
+- No promotion; `V13` remains selected. Used 4 of that day's 5
+  submissions (plus 1 already spent finishing the `tau` sweep) -- no
+  quota remaining today for further real-submission tests.
+- Open: with `tau`/`alpha`/`w_pf` all now validated against real
+  submissions, the highest-value remaining levers are back to model
+  structure (LightGBM/CatBoost composition, feature engineering) or the
+  per-well diagnostic (`V5` vs. `V11`, still the only recoverable
+  pair) -- post-process tuning on this configuration looks exhausted.
+
 ## 8. Execution Checklist (Next Run Cycle)
 
 - Keep one notebook-only controlled change per Kaggle run cycle.
