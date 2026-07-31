@@ -64,6 +64,7 @@ Append rows to this table as runs complete.
 | BeamPF | rogii-pp-replay-wpf15 | v1 | V17 | submission | 10.088 | 2026-07-30T01:32:52.773000Z | submitted | w_pf=0.15 override on V13's exact config otherwise | Worse than V13 by 0.136 -- confirms w_pf=0.05 (V13's value, also the grid search's own pick) is closer to optimal than either 0.0 or 0.15 |
 | BeamPF | rogii-pp-replay-alpha115 | v1 | V18 | submission | 10.474 | 2026-07-30T01:32:57.037000Z | submitted | alpha=1.15 override on V13's exact config otherwise, testing beyond the grid search's 1.00 ceiling | Worse than V13 by 0.522 -- the worst result of the entire tau+pp sweep combined; amplifying the residual correction clearly hurts |
 | BeamPF | rogii-pp-replay-alpha085 | v1 | V19 | submission | 10.227 | 2026-07-30T01:33:01.460000Z | submitted | alpha=0.85 override on V13's exact config otherwise | Worse than V13 by 0.275 -- shrinking also hurts, confirming alpha=1.0 (V13's value) is a real local optimum in both directions |
+| BeamPF | rogii-beam-pf-submission-replay-cpu | v9 | V20 | submission | 10.194 | 2026-07-31T03:48:13.027000Z | submitted | Restored 3rd LightGBM model (lr=0.025, seed=42) alongside V13's 2-LGB + CatBoost stack, with tau=None already locked in -- a combination never tested before (the last real 3-model stack, V3/V5, predates the tau=None fix) | Worse than V13 by 0.242. Local ablation showed all three LGB models near-zero marginal value (consistent with the whole cycle's pattern), and the real result confirms it: V13's exact 2-model config remains the sweet spot, adding the third model actively hurts |
 
 ## 6. Audit Log (Latest)
 
@@ -75,6 +76,7 @@ Append rows to this table as runs complete.
 | promotion | 2026-07-29 | agent | `V11` (`10.022`) beats `V3` (`10.197`) by `0.175`. `V3` demoted from `selected` to `submitted`. Updated `README.md`, `docs/1_instructions.md`, `docs/3_baseline_models.md` per the Promotion Rule (S3). | `V11` is the new selected version. |
 | promotion | 2026-07-29 | agent | `V13` (`9.952`) beats `V11` (`10.022`) by `0.070` via a clean within-run `tau` A/B test (V12/V13/V14 share one training pass, only `tau` differs). `V11` demoted to `submitted`. Updated `README.md`, `docs/1_instructions.md`, `docs/3_baseline_models.md` per the Promotion Rule (S3); `notebooks/4_rogii_beam_pf.ipynb` changed to force `tau=None` instead of trusting the local grid search's choice. | `V13` is the new selected version. |
 | sweep closed, no promotion | 2026-07-30 | agent | `alpha`/`w_pf` sweep (`V16`-`V19`) perturbed V13's `alpha=1.0, w_pf=0.05` in both directions on each parameter; all four scored worse than `V13`. Unlike `tau`, the local grid search's picks for `alpha` and `w_pf` hold up under real-submission testing. | `V13` remains selected; no doc changes needed since nothing beat it. |
+| model test, no promotion | 2026-07-31 | agent | Restored the 3rd LightGBM model (`V20`, `10.194`) to test whether the original 3-model stack beats `V13`'s 2-model stack now that `tau=None` is locked in. It doesn't -- worse by `0.242`. | `V13` remains selected; `LGB_CONFIGS` reverted back to the 2-model stack. |
 
 ## 7. Closing Rule
 

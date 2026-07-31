@@ -95,9 +95,12 @@ runbook's [Optional Local
 Audit](./6_kaggle_autosubmit_runbook.md#12-optional-local-audit) step.
 
 Latest summary: `V13` (`9.952`) is selected, promoted 2026-07-29 after a
-`tau` post-process A/B beat the local grid search's own pick; a follow-up
-`alpha`/`w_pf` sweep on 2026-07-30 found no further improvement. See
-`8_run_log.md` for the full trail.
+`tau` post-process A/B beat the local grid search's own pick. Follow-up
+`alpha`/`w_pf` sweep (2026-07-30) and a 3rd-LightGBM-model restore test
+(2026-07-31, `V20`, `10.194`) both found no improvement -- `V13`'s exact
+config (2-model LightGBM/CatBoost stack, `tau=None`, `alpha=1.0`,
+`w_pf=0.05`) looks like a genuine local optimum. See `8_run_log.md` for
+the full trail.
 
 ## 8. Execution Checklist (Next Run Cycle)
 

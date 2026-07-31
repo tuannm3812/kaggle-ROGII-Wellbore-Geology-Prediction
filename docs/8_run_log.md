@@ -468,3 +468,37 @@ history).
   per-well diagnostic (`V5` vs. `V11`, still the only recoverable
   pair) -- post-process tuning on this configuration looks exhausted.
 
+### 2026-07-31: Restore 3rd LightGBM Model -- Confirms 2-Model Stack Is The Sweet Spot
+
+- With post-process tuning exhausted, shifted to model structure: the
+  daily submission quota reset, so restored the first-dropped LightGBM
+  config (`lr=0.025, seed=42`, confirmed free in two separate local
+  ablations back when it was part of the original 3-model stack)
+  alongside the current 2-model (`lr=0.020`, `lr=0.030`) + CatBoost
+  stack, now combined with the `tau=None` fix -- a combination never
+  tested before (the last real 3-model stack, `V3`/`V5`, predates that
+  fix). Also restored `disable_lgb1`/`disable_lgb2` ablation rows in
+  `run_component_ablation_matrix()` for full per-model coverage.
+- GPU train run (kernel v8, `tuannm3812/rogii-beam-pf-gpu-v2-production`)
+  completed in ~2h40m (closer to the original 3-model timing, as
+  expected). Local ablation showed all three LightGBM models again
+  near-zero marginal value (`disable_lgb0`/`disable_lgb1`/`disable_lgb2`
+  all within `~0.005` of `full = 10.4749`), consistent with the whole
+  cycle's pattern -- CatBoost dominant (`ridge_weights.csv`:
+  `lgb0=0.114, lgb1=0.0, lgb2=0.175, cb=0.712`).
+- Pushed the submission-replay kernel (v9) and submitted via
+  `competition_submit_code`. **Result: `V20` = `10.194`** -- worse than
+  `V13` (`9.952`) by `0.242`. No promotion.
+- Confirms `V13`'s exact 2-model composition is a genuine sweet spot,
+  not just "whatever happened to be committed when `tau=None` was
+  found" -- adding the third model back, even with the tau fix in
+  place, actively hurts. Reverted `LGB_CONFIGS` and the ablation matrix
+  back to the 2-model state (commit `59cd783`); `V13` remains selected.
+- With `tau`/`alpha`/`w_pf`/LightGBM-model-count all now tested against
+  real submissions and none beating `V13`, the model as currently
+  structured looks like a strong local optimum. Remaining open levers:
+  the per-well diagnostic (still only `V5`/`V11` recoverable),
+  CatBoost hyperparameters (untested via real submission), or new
+  feature work (spatial dip, monotonicity constraints -- see
+  `docs/2_eda_insights.md` §9 and `docs/4_next_steps.md` §5).
+

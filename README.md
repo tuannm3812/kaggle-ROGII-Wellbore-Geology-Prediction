@@ -258,5 +258,14 @@ The highest-value notebook improvement is diagnostic rather than another broad m
    (`1.0`) and `w_pf` (`0.05`) hold up under real testing -- `V13` is a
    genuine local optimum across all three post-process parameters now
    validated. No promotion.
+5. **3rd LightGBM model restored and tested (done, no improvement).**
+   Shifted to model structure: restored the first-dropped LightGBM
+   config (`lr=0.025`) alongside `V13`'s 2-model stack, now with
+   `tau=None` locked in -- untested before, since the last real
+   3-model stack (`V3`/`V5`) predates that fix. Result: `V20` (`10.194`)
+   scored worse than `V13` by `0.242`. Confirms `V13`'s exact 2-model
+   composition is a genuine sweet spot, not an artifact of when `tau=None`
+   was found. Reverted `LGB_CONFIGS` back to 2 models; `V13` remains
+   selected.
 
-The immediate priority is shifting back to model structure (LightGBM/CatBoost composition, feature engineering) or the per-well diagnostic, since post-process tuning on the current model has been thoroughly tested against real submissions and found to be at a local optimum.
+With `tau`/`alpha`/`w_pf`/LightGBM-model-count all now tested against real submissions and none beating `V13`, the current model looks like a strong local optimum. The immediate priority is either the per-well diagnostic (still only `V5`/`V11` recoverable), CatBoost hyperparameters (untested via real submission), or new feature work (spatial dip, monotonicity constraints).
